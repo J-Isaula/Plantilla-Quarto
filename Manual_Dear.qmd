@@ -1,0 +1,1778 @@
+---
+title: "Estructura y Manual de Usuario de DeaR"
+header-includes:
+  - \usepackage{fancyhdr}
+  - \usepackage{lipsum}
+  - \pagestyle{fancy}
+  - \fancyhead[L]{\includegraphics[width=1.7cm]{C:/Users/juani/OneDrive/Documentos/MemoriaTFE/logo.jpeg}}
+  - \fancyfoot[CO,CE]{IHSS}
+  - \fancyfoot[LE,RO]{\thepage}
+format:
+  pdf:
+    toc: true
+    toc-depth: 4
+    number-sections: true
+    colorlinks: true
+fig_caption: true
+theme: united
+fig-cap-location: top
+code-block-background: true
+code-block-border-left: false
+highlight-style: gruvbox       # [gruvbox]
+css: my.css
+---
+
+```{=tex}
+\newpage
+\listoffigures
+```
+\newpage
+
+# Introduccióncalculate_beneficios_concedidos
+
+El Presente Manual brinda al personal de la Unidad de Actuaría los lineamientos que se deben seguir para la utilización de la herramienta tecnológica `DeaR(App de Automatización Determinista para el computo de Reservas Actuariales y  Valuaciones Actuariales)` la cual es una App creada en el lenguaje de programación `R` y su objetivo es ayudar en los computos de las *Valuaciones Actuariales, Reservas Técnicas*, según lo establecido en el Plan Operativo Anual de la Unidad de Actuaría que se tiene programado la elaboración de un informe de Estudio Actuarial del Régimen del Seguro de Previsión Social.
+
+Dentro de los lineamientos que presenta el Manual se encuentran las descripciones: librerias utilizadas para la elaboración de la herramienta, funciones que nos ayudan en la obtención de valores presentes de beneficios concedidos, beneficios por conceder, contribuciones, gasto administrativo, reservar técnicas, balance actuarial, obtención de bases de datos, notas técnicas en la que se fundamentan los cálculos
+
+Con el Manual se pretende que el personal de la Unidad de Actuaría ya sea personal nuevo o personal que no haya realizado esta actividad, mantenga una norma sobre la cual fundamentarse para realizar sus labores. \newpage
+
+# DeaR El programa `Dear` es una herramienta que nos ayuda con el cálculo del valor presente de las contribuciones de cotizantes activos, beneficios por conceder, beneficios concedidos, valuaciones actuariales y las reservas técnicas.
+
+`DeaR` esta compuesto por 3 archivos dentro de su carpeta principal:
+
+-   `User Interface`
+
+-   `Processes`
+
+-   `Server`
+
+Acontinuación se describe el contenido de cada uno de estos archivos.
+
+## User Interface
+
+contiene los `script` con el diseño de la interfaz y cada uno de sus componentes. Estos `script` son:
+
+-   *body_home.R*
+-   *body_00_bases_datos.R*
+-   *body_01_balances_actuariales.R*
+
+### body_home.R
+
+El script *`body_home.R`* contiene todo el argumento del ítem de *`inicio`* que aparece en la parte lateral izquierza de la interfaz, ver Figura 1. El bloque de código creado para generación del ítem de inicio lo puede apreciar a continuación:
+
+```{r  eval = FALSE}
+
+tab_home <- tabItem(tabName = "home",
+  box(status="success",
+      solidHeader = F,
+      collapsible = F,
+      width = 12,
+      fluidRow(column(width = 6,
+            h1("Willkommen!"), 
+            p("Bienvenido a la aplicacion",  strong("DeaR"), 
+              em("(Deterministic Automation App for Actuarial Reserves)"), 
+              "utilizada para el calculo de Valores Actuariales Presentes 
+              y Reservas Tecnicas"),
+          p("Utilizandola notaras lo ",  em("facil y rapido"), 
+                "que es realizar lo siguiente!"),
+          
+          
+              p("- Cargar resumenes de bases de datos"),
+              p("- Cargar tablas de mortalidad"),
+              p("- Calcular balances actuariales"),
+              p("- Calcular reservas tecnicas"),
+              p("- y mas !")),
+       column(width = 6, align = "center",
+              img(src="monet_grainstacks.jpg", width = "100%"))
+             )
+      ), 
+  
+  
+  box(status = "success", 
+      width = 12,
+      fluidRow(column(width = 6,
+        h1("Instrucciones"),
+        p("1. Presionar el boton de",strong("Subir bases y tablas")),
+        p("2. Seleccionar los resumens de las bases de datos 
+          y las tablas de mortalidad"),
+        p("3. Ir a la pestania de",strong("Valuacion Actuarial")),
+        p("4. Ingresar los valores de los supuestos"),
+      p("5. Presionar el boton de",strong("Calcular Valuacion Actuarial"))
+                  )
+               )
+      )
+  )
+
+```
+
+El resultado que se obtiene del bloque de código previo (`body_home.R`), es el que se observa en la Figura 1, donde el ítem de inicio brinda un mensaje de bienvenida y una serie de pequeñas instrucciones para el uso de la herramienta.
+
+### body_00_bases_datos.R
+
+Este `script` contiene el argumento del segundo ítem (`Bases de datos`) siempre ubicado en la parte lateral izquierda de la interfaz que pudo apreciar en la Figura 1. Lo que encontrará en esta sección de la interfaz es una pequeña descripción de las bases de datos que se cargan al programa y una representación gráfica de las mismas por medio de histogramas. Estas bases de datos hacen referencia a las siguientes categorías:
+
+-   Cotizantes Activos
+
+    -   cotizantes activos
+    -   cotizantes activos - viudez
+    -   cotizantes activos - orfandad
+
+-   Jubilaciones por Vejez
+
+    -   Vejez
+    -   vejez - viudez
+    -   vejez - orfandad
+
+-   Pensiones de Invalidez
+
+    -   invalidez
+    -   invalidez - viudez
+    -   invalidez - orfandad
+
+*Figura 1: Interfaz de DeaR que se genera por medio del Script body_home.R*
+
+![](C:/Users/juani/OneDrive/Documentos/MemoriaTFE/interfaz.jpeg){#fig-interfaz}
+
+Dado que este manual es para uso interno de la Unidad de Acturía del Instituto Hondureño de Seguridad Social (IHSS), se asume que la persona que este leyendo el manual ya maneja el contenido de cada una de estas bases de datos que se mencionaron previamente. Caso contrario se recomienda lea el manual de `estructuración de información del régimen  del seguro de previsión social y lineamientos de tratamiento`.
+
+El código o las lineas de código que nos ayudan a que se pueda visualizar el contenido de *`body_00_bases_datos.R`* es el siguiente:
+
+```{r eval=FALSE}
+
+tab_zero <- 
+   tabItem(tabName = "poblacion",
+      fluidRow(box(title = strong("Histogramas de Edades"),
+           width = 12,collapsible = T,status = "primary",solidHeader = TRUE,
+           tabBox(width = 12,
+              tabPanel(title = "Cotizantes Activos", 
+                       plotly::plotlyOutput(outputId = "ca_hist_plot")),
+              tabPanel(title = "Pensiones de Vejez",
+                       plotly::plotlyOutput(outputId = "vejez_hist_plot")),
+              tabPanel(title = "Pensiones de Invalidez",
+                       plotly::plotlyOutput(outputId = "invalidez_hist_plot"))
+                      )
+                   )
+               ),
+      fluidRow(box(title = strong("Cotizantes Activos"),
+             width = 12,collapsible = T,status = "primary",solidHeader = TRUE,
+             tabBox( width = 12, 
+                tabPanel(title = "Cotizantes Activos",
+                         DT::dataTableOutput(outputId = "ca_table")),
+                tabPanel(title = "Cotizantes Activos - Viudez", 
+                         DT::dataTableOutput(outputId = "ca_viudez_table")),
+                tabPanel(title = "Cotizantes Activos - Orfandad", 
+                         DT::dataTableOutput(outputId = "ca_orfandad_table"))
+                )
+             )
+          ),
+      fluidRow(box(title = strong("Jubilaciones por Vejez"),
+           width = 12,collapsible = T,status = "primary",solidHeader = TRUE,
+           tabBox(width = 12, 
+              tabPanel(title = "Vejez", 
+                       DT::dataTableOutput(outputId = "vejez_table")),
+              tabPanel(title = "Vejez - Viudez",
+                       DT::dataTableOutput(outputId = "vejez_viudez_table")),
+              tabPanel(title = "Vejez - Orfandad",
+                       DT::dataTableOutput(outputId = "vejez_orfandad_table"))
+              )
+           )
+       ),
+      fluidRow(box(title = strong("Pensiones de Invalidez"),
+         width = 12,collapsible = T,status = "primary",solidHeader = TRUE,
+         tabBox(width = 12, 
+            tabPanel(title = "Invalidez",
+                   DT::dataTableOutput(outputId = "invalidez_table")),
+            tabPanel(title = "Invalidez - Viudez",
+                  DT::dataTableOutput(outputId = "invalidez_viudez_table")),
+            tabPanel(title = "Invalidez - Orfandad", 
+                  DT::dataTableOutput(outputId = "invalidez_orfandad_table"))
+            )
+         )
+      )
+    )
+
+```
+
+Figura 2: Descripción de Bases de Datos
+
+![](C:/Users/juani/OneDrive/Documentos/2023/MemoriaTFE/Base_datos.jpeg){fig-align="center"}
+
+Tal como lo mencionamos previamente, el resultado final que nos produce este bloque de código es la descripción delas bases de datos que se ingresan `DeaR`, ver Figura 2.
+
+### body_01_balances_actuariales.R
+
+Finalmente, en este último `script` del archivo *`User Interface`* encontrará la estructura de la interfaz que tiene que ver con el Balance Actuarial y Reservas Técnica, estos computos depende de una serie de supuesto que también se podran apreciar en la interfaz, estos supuestos son parámetros que se encuentran tanto en la ley del IHSS (*edad jubilación hombres y mujeres, tiempo mínimo de cotización para hombres y mujeres, edad maxima de orfandad, tasa de contribución, etc*), como también algunos parámetros de caracter estadístico dependiendo algunos de la información que proporcione el *Banco Central de Honduras* y la *Secretaría de Trabajo y Seguridad Social*, tales como, *inflación, salario base de gastos funerarios* y *tasa de rendimiento nominal (depende del IHSS, pero es dato de tipo estadístico)*. Estos parámetros también estarán sujetos a opinión del consultor Actuarial que este llevando a cabo el Estudio Actuarial.
+
+Los parametros que estan por ley los encontrará cargados por defecto, como puede apreciar en la Figura 3.
+
+A continuación se muestran las lineas de código contenidas en *body_01_balances_actuariales.R*.
+
+```{r eval=FALSE}
+
+tab_eins <- tabItem(tabName = "valuacion_actuarial",
+                 h3(strong("Hoja de Calculo de Valuacion Actuarial")),
+                 
+                 # Valores de cajas de supuestos
+                 
+           fluidRow(box(title = strong("Supuestos"), width = 12,
+                    collapsible = T, status = "primary",solidHeader = TRUE,
+               box(width = 3, status = "primary", solidHeader = TRUE, 
+                   numericInput(inputId = "jubilacion_hombre_reglamento", 
+                                label = "Edad de jubilacion de hombres", 
+                                value = 65, min = 60, max = 70 ),
+                   numericInput(inputId = "jubilacion_mujer_reglamento",  
+                                label = "Edad de jubilacion de mujeres",
+                                value = 60, min = 60, max = 70 ),
+                   numericInput(inputId = "tiempo_postergacion_hombre",   
+                                label = "Anios de postergacion de 
+                                jubilacion de hombres",
+                                value = 3, min = 0, max = 10 ),
+                   numericInput(inputId = "tiempo_postergacion_mujer", 
+                        label = "Anios de postergacion de 
+                        jubilacion de mujeres",
+                        value = 4, min = 0, max = 10 ),
+           numericInput(inputId = "porcentaje_gastos_administrativos",
+                        label = "Porcentaje de gastos administrativos",
+                        value = 0.08, min = 0, max = 0.15 )
+       )
+ ,
+         box(width = 3,  status = "primary",  solidHeader = TRUE,
+             numericInput(inputId = "tiempo_minimo_cotizaciones",
+                          label = "Tiempo minimo de anios de cotizaciones",
+                          value = 15, min = 10, max = 20 ),
+             numericInput(inputId = "tiempo_minimo_cotizaciones_invalidez",  
+                          label = "Tiempo minimo de anios de cotizaciones
+                          por invalidez", 
+                          value = 5, min = 5, max = 10 ),
+             numericInput(inputId = "tasa_reemplazo_viudez",    
+                          label = "Tasa de reemplazo de Viudez", 
+                          value = 0.4, min = 0, max = 1 ),
+             numericInput(inputId = "tasa_reemplazo_orfandad", 
+                          label = "Tasa de reemplazo de Orfandad",
+                          value = 0.2, min = 0, max = 1 )
+         )
+         ,
+         box(width = 3,  status = "primary",  solidHeader = TRUE,
+             numericInput(inputId = "tasa_rendimiento_nominal",    
+                          label = "Tasa de rendimiento nominal",
+                          value = 0.090, min = 0, max = 0.15 ),
+             numericInput(inputId = "tasa_inflacion",           
+                          label = "Tasa de Inflacion", 
+                          value = 0.05, min = 0, max = 0.1 ),
+             numericInput(inputId = "tasa_contribucion_salario",  
+                          label = "Tasa de Contribucion ",
+                          value = 0.03, min = 0, max = 0.15 ),
+             numericInput(inputId = "porcentaje_salud",   
+                          label = "Porcentaje de Contribucion de salud", 
+                          value = 0.105, min = 0.075, max = 0.20 )
+         )
+         ,
+         box(width = 3,  status = "primary",  solidHeader = TRUE,
+             numericInput(inputId = "edad_maxima_orfandad",    
+                          label = "Edad maxima de orfandad",
+                          value = 18, min = 14, max = 24 ),
+             numericInput(inputId = "porcentaje_gastos_funerarios",
+                          label = "Porcentaje de Gastos funerarios 
+                          reconocidos", 
+                          value = 0.5, min = 0.4, max = 1 ),
+             numericInput(inputId = "salario_de_referencia_sepelio",
+                          label = "Salario base de gastos funerarios", 
+                          value = 14067.76, min = 8800, max = 20000 ),
+             numericInput(inputId = "patrimonio", label = "Patrimonio",
+                          value =  31937507098.09 , min = 0,
+                          max = 40000000000)
+         )
+    )
+ ),
+ 
+ # Boton que da luz verde para que se realicen los cómputos
+ actionButton("calculate", "Calcular valuacion actuarial"),
+ br(),
+ 
+ # Cajas Resumenes de Resultados
+ fluidRow(
+         infoBoxOutput(width = 3, outputId = "contribuciones_total"),
+         infoBoxOutput(width = 3, outputId = "beneficios_por_conceder_total"),
+         infoBoxOutput(width = 3, outputId = "beneficios_concedidos_total"),
+         infoBoxOutput(width = 3, outputId = "situacion_actuarial")
+ ),
+ 
+ # Resultados desglosdados
+
+ fluidRow(
+         box(width = 6,  status = "primary",  solidHeader = TRUE,
+             title = strong("Valuacion Actuarial"), 
+             DT::dataTableOutput(outputId = "beneficios") %>% 
+                     shinycssloaders::withSpinner(color = "#ff7700")
+         ), 
+         box(width = 6,  status = "primary",  solidHeader = TRUE,
+             title = strong("Reservas Tecnicas"), 
+             DT::dataTableOutput(outputId = "reservas_tecnicas") %>% 
+               shinycssloaders::withSpinner(color = "#ff7700")
+         )
+    )
+)
+
+```
+
+Lo que se genera con estas lineas de código de *body_01_balances_actuariales.R* son los resultados que se obtienen de la valuación actuarial y reservas técnicas, observe figura Figura 3.
+
+*Figura 3: Resultados de Valuación Actuarial y Reservas Técnicas*
+
+![](C:/Users/juani/OneDrive/Documentos/2023/MemoriaTFE/Valuacion_Actuarial.jpeg){fig-align="center"}
+
+Recuerde que estamos conociendo el contenido del archivo `User Interface` lo que implica que unicamente se esta mostrando el diseño de la interfaz principal de `DeaR`, en secciones futuras se ilustrará un ejemplo donde podrá apreciar el funcionamiento de cada ítem (inicio, Base de datos y Valuación Actuarial) que se menciono en esta sección cuando cargamos las bases de datos que se mencionaron previamente en `body_00_bases_datos.R`.
+
+### Librerías
+
+En esta sección se describen cada una de las librerías utilizadas para la creación de la herramienta `DeaR` en el lenguaje de programación `R`. Las clasificaremos en dos categorías: librerias para manipulación de datos y librerías para manipulación del paquete `Shiny`.
+
+-   Librerías orientadas a la manipulación de datos:
+
+    ```{r eval=FALSE}
+    library(dplyr)
+    library(data.table)
+    library(tibble)
+    library(tidyr)
+    library(readr)
+    library(digest)
+    ```
+
+    -   `dplyr:` es una gramática de manipulación de datos que proporciona un conjunto consistente de verbos que lo ayudan a resolver los desafíos de manipulación de datos más comunes:
+
+        -   *`mutate():` agrega nuevas variables que son funciones de variables existentes.*
+
+        -   *`select():`* elige variables en función de sus nombres.
+
+        -   *`filter():`* elige los casos en función de sus valores.
+
+        -   *`summarise():`* reduce múltiples valores a un solo resumen
+
+        -   *`arrange():`* cambia el orden de las filas.
+
+    -   `data.table:` este paquete lleva la eficiencia al siguiente nivel. Los *`data.table`* pueden ser utilizados como *`data.frame`*. Si se hace un `class(...)` de un data.table se imprime una lista con dos valores: "data.table", "data.frame", identificando que los objetos data.table también deben ser considerados como data.frame y las librerias que solo usa data.frame no tendrían problemas al usar `data.table`. Este paquete tiene sus propias funciones para importar y exportar datos `freed()` y `fwrite()`. Estas funciones sirven para cargar archivos tabulares, o de texto, separados por ciertos delimitadores. Aquí se muestran los argumentos más importantes de estas funciones:
+
+        -   *`x:`* el objeto que queremos exportar. En caso de importar, esto no hace falta.
+
+        -   *`file:`* el lugar donde queremos guardar el archivo y su extensión.
+
+        -   *`sep:`* el delimitador entre columnas. En un archivo `.csv` por lo general es ",".
+
+        -   *`dec:`* el separador decimal
+
+        -   *`dateTimeAs:`* formatos en el que guardar formatos de fecha. Por defecto es "ISO"
+
+    -   `tibble:` es una versión moderna de los marcos de datos. Mantienen las características que han resistido la prueba del tiempo y eliminan las características que solían ser convenientes pero que ahora son frustrantes. es una buena manera de crear marcos de datos. Encapsula las mejores prácticas para marcos de datos. Nunca cambia el tipo de entrada (es decir, ¡no más `stringsAsFactors = FALSE`!)
+
+    -   `tidyr:` este paquete es relativamente nuevo y facilita *ordenar* los datos. Los datos ordenados son datos con los que es fácil trabajar.
+
+    -   `readr:` el objetivo de readr es proporcionar una forma rápida y sencilla de leer datos rectangulares de archivos delimitados, como valores separados por comas (CSV) y valores separados por tabuladores (TSV).
+
+    -   `digest:` este paquete proporciona la creación de resumenes hast de objetos `R` arbitrarios(utilizando los algoritmos md5, sha-1, sha-256, crc32, xxhash, murmurhash, spookyhash y blake3) que permiten una fácil comparación de los objetos del lenguaje `R`.
+
+-   Librerías orientadas al uso de Shiny
+
+    ```{r eval=FALSE}
+    library(shiny)
+    library(shinydashboard)
+    library(shinycssloaders)
+    library(DT)
+    library(formattable)
+    library(plotly)
+    ```
+
+    -   `shiny:` es un paquete R que facilita la creación de aplicaciones web interactivas directamente desde R. Puede alojar aplicaciones independientes en una página web o incrustarlas en documentos R Markdown o crear paneles . También puede ampliar sus aplicaciones Shiny con temas CSS , widgets html y acciones de JavaScript .
+
+    -   `shinydashboard:` Este paquete proporciona un tema además de shiny, lo que facilita la creación de tableros interactivos.
+
+    -   s`hinycssloaders:` Cuando se vuelve a calcular una salida "Shiny" (como un diagrama, una tabla, un mapa, etc.), permanece visible pero se atenúa. Usando 'shinycssloaders', puede agregar una animación de carga ("spinner") a las salidas, aparecerá automáticamente una rueda giratoria mientras se vuelve a calcular la salida.
+
+    -   `DT:` este paquete proporciona una interfaz \`R\` para la biblioteca de JavaScript `DataTables`. Los objetos de datos `R` (matrices o marcos de datos) se pueden mostrar como tablas en páginas HTML, y `DataTables` proporciona filtrado, paginación, clasificación y muchas otras funciones en las tablas.
+
+    -   `formattable:` son marcos de datos que se representan como una tabla HTML con funciones de formateador aplicadas, lo que se asemeja al formato condicional en Microsoft Excel.
+
+    -   `plotly:` Crea gráficos interactivos con calidad de publicación.Por ejemplo, diagramas de líneas, diagramas de dispersión, gráficos de área, gráficos de barras, barras de error, diagramas de caja, histogramas, mapas de calor, subgráficos, gráficos de ejes múltiples y gráficos 3D (basados en WebGL). `Plotly.R` es gratuito y de código abierto y puede ver el código fuente, informar problemas o contribuir en `GitHub`.
+
+Estas son las librerías principales que se utilizaron para la creación de la herramienta `DeaR`, es importante que el lector comprenda la lógica de cada una de ellas para poder tener una mejor comprensión de su uso que mostraremos en secciones posteriores.
+
+## Process
+
+En este archivo se encuentran los `script` que contiene las funciones que nos ayudan para el cómputo de los conmutados para las tablas de mortalidad, valor presente de beneficios concedidos, beneficios por conceder, contribuciones y reservas técnicas. Los `script` se nombraron de la siguiente manera:
+
+-   *`process_03_conmutados.R`*
+
+-   *`process_04_beneficios_concedidos.R`*
+
+-   *`process_04_beneficios_por_conceder.R`*
+
+-   *`process_04_contribuciones.R`*
+
+-   *`process_05_reservas_tecnicas.R`*
+
+A continuación comenzaremos a describir el contenido de cada uno de estos `script`.
+
+### process_03_conmutados.R
+
+Este `script` contiene una única función que se encargara de calcular los conmutados $D_x, C_x, N_x$ y $M_x$ dado que las tablas de mortalidad (*tabla de mortalidad decrementos multiples*, *tabla mortalidad activos*, *tabla mortalidad invalidos*, *tabla mortalidad jubilados*) que se cargan en `DeaR` no contienen estos conmutados, por ello es una de las primeras tareas de las cuales se encarga esta herramienta.
+
+A continuación se muestran las lineas de código que contiene *`process_03_conmutados.R`*, como podrá notar, se comienza definiendo la función con sus respectivos parámetros (tabla_mortalidad, tasa_rendimiento_fondo, tasa_inflación), posteriormente el cuerpo de la función consiste en el cómputo de los conmutados para ambos generos (masculino y femenino) de la tabla que recibe como parámetro la función *`conmutados`* y su objetivo final es retornar esos resultados en un marco de datos (`DataFrame`), veamos:
+
+```{r eval=FALSE}
+# Conmutados                                                 ----
+conmutados <- 
+  function(tabla_mortalidad, tasa_rendimiento_fondo, tasa_inflacion) {
+    
+  # 1.Argumentos
+  tabla_mortalidad <- tabla_mortalidad
+  
+  # 2.Creacion de tabla
+  conmutados <- tabla_mortalidad %>%
+    mutate(tasa_interes=(1 + tasa_rendimiento_fondo) / (1 + tasa_inflacion) - 1,
+           `v_interes^x` = (1 + tasa_interes)^-(edad), 
+           `v_interes^(x+1)` = (1 + tasa_interes)^-(edad+1),
+           Dx = `v_interes^x` * l_x,
+           Cx = `v_interes^(x+1)` * d_x,
+           Nx = 0, 
+           Mx = 0) 
+  
+  # 3.Conmutados masculinos
+  conmutados_masculino <- conmutados %>% filter(genero == "masculino")
+  for(i in 1:nrow(conmutados_masculino)){
+   conmutados_masculino$Nx[i] <- 
+     sum(conmutados_masculino$Dx[i:nrow(conmutados_masculino)])
+   conmutados_masculino$Mx[i] <- 
+     sum(conmutados_masculino$Cx[i:nrow(conmutados_masculino)])
+  }
+  
+  # 4.Conmutados femeninos
+  conmutados_femenino<- conmutados %>% filter(genero == "femenino")
+  for(i in 1:nrow(conmutados_femenino)){
+    conmutados_femenino$Nx[i] <-
+      sum(conmutados_femenino$Dx[i:nrow(conmutados_femenino)])
+    conmutados_femenino$Mx[i] <-
+      sum(conmutados_femenino$Cx[i:nrow(conmutados_femenino)])
+  }
+  
+  # 5.Union de conmutados masculinos y femeninos en una sola tabla
+  conmutados <- bind_rows(conmutados_masculino, conmutados_femenino) 
+  
+  # 6.Eliminacion de conmutados masculino y femenino 
+  conmutados_masculino <- NULL
+  conmutados_femenino  <- NULL
+  
+  # 7.Dataframe a retornar
+  return(conmutados)
+  
+}
+```
+
+### process_04_beneficios_concedidos.R
+
+`process_04_beneficios_concedidos.R` contiene las funciones de valor presente correspondientes para realizar el computo de los diferentes beneficios concedidos del Régimen del Seguro de Previsión Social. Este tipo de beneficios concedidos son:
+
+-   Beneficio concedido por vejez
+
+    -   Beneficio concedido vejez - salud
+    -   Beneficio concedido vejez - viudez
+    -   Beneficio concedido vejez - orfandad
+    -   Beneficio concedido de gastos funerarios por vejez
+
+-   Beneficio concedido por invalidez
+
+    -   Beneficio concedido invalidez - salud
+    -   Beneficio concedido invalidez - viudez
+    -   Beneficio concedido invalidez - orfandad
+    -   Beneficio concedido de gastos funerarios por invalidez
+
+-   Beneficio concedido por viudez
+
+-   Beneficio concedido por orfandad
+
+-   Beneficio concedido por ascendencia
+
+La función `calculate_beneficios_concedidos` nos ayuda para realizar el cálculo de cada uno de los beneficios concedidos que se mencionaron previamente, esta función se describe a continuación y es la única incluida en el \`script\` \*process_04_beneficios_concedidos.R\*.
+
+```{r eval=FALSE}
+# Beneficios concedidos                                      ----
+calculate_beneficios_concedidos <- function(arg_supuestos, 
+                                            arg_resumenes_pensiones,
+                                            arg_conmutados_jubilados,
+                                            arg_conmutados_invalidos) {
+  # Argumentos                                                   ----
+  # arg_supuestos
+  tasa_rendimiento_nominal    <- 
+    arg_supuestos[arg_supuestos$supuesto == "tasa_rendimiento_nominal", 2] 
+  %>% pull()
+  tasa_inflacion              <- 
+    arg_supuestos[arg_supuestos$supuesto == "tasa_inflacion", 2] 
+  %>% pull()
+  tasa_interes                <-
+    (1 + tasa_rendimiento_nominal) / (1 + tasa_inflacion)-1
+  tasa_incremento_salarial    <-  
+    arg_supuestos[arg_supuestos$supuesto == "tasa_incremento_salarial", 2] 
+  %>% pull()
+  porcentaje_salud            <-  0 
+  tasa_reemplazo_viudez       <-  
+    arg_supuestos[arg_supuestos$supuesto == "tasa_reemplazo_viudez", 2] 
+  %>% pull()
+  tasa_reemplazo_orfandad     <- 
+    arg_supuestos[arg_supuestos$supuesto == "tasa_reemplazo_orfandad", 2] 
+  %>% pull()
+  porcentaje_gastos_funerarios<-  
+    arg_supuestos[arg_supuestos$supuesto == "porcentaje_gastos_funerarios", 2]
+  %>% pull()
+  edad_maxima_orfandad        <- 
+    arg_supuestos[arg_supuestos$supuesto == "edad_maxima_orfandad", 2] 
+  %>% pull()
+  salario_de_referencia_sepelio<- 
+    arg_supuestos[arg_supuestos$supuesto == "salario_de_referencia_sepelio", 2] 
+  %>% pull()
+  
+  # Resumenes de pensiones  
+  resumen_jubilados_vejez              <- arg_resumenes_pensiones[[1]]
+  resumen_jubilados_vejez_viudez       <- arg_resumenes_pensiones[[2]]
+  resumen_jubilados_vejez_orfandad     <- arg_resumenes_pensiones[[3]]
+  resumen_pensiones_invalidez          <- arg_resumenes_pensiones[[4]]
+  resumen_pensiones_invalidez_viudez   <- arg_resumenes_pensiones[[5]]
+  resumen_pensiones_invalidez_orfandad <- arg_resumenes_pensiones[[6]]
+  resumen_pensiones_viudez             <- arg_resumenes_pensiones[[7]]
+  resumen_pensiones_orfandad           <- arg_resumenes_pensiones[[8]]
+  resumen_pensiones_ascendencia        <- arg_resumenes_pensiones[[9]]
+  
+  # Conmutados
+  arg_conmutados_jubilados <- arg_conmutados_jubilados
+  arg_conmutados_invalidos <- arg_conmutados_invalidos
+  
+  w <- max(arg_conmutados_jubilados$edad)
+
+```
+
+#### Beneficios de jubilados por vejez
+
+$$RJ_x = PJ\cdot (1 + a_x^{(12)}\cdot \% salud) + 2\cdot a_{x}^{(2)}$$ donde:
+
+-   $RJ_x:$ valor presente de la pensión por jubilación en el año $x$
+-   $PJ:$ Monto de pensión por jubilación
+-   $a_x^{(12)} = a_x^{(m)} + \frac{11}{24}$
+-   $a_x^{(2)} = a_x^m + \frac{1}{4}$
+-   $a_x^m = \frac{N_{(x+1)}}{D_{(x)}}$
+
+Su cálculo se aprecia en el siguiente bloque de codigo que aparece en el `script`:
+
+```{r eval=FALSE}
+    mutate(`edad+1` = edad + 1) %>% 
+    left_join(select(arg_conmutados_jubilados, genero, edad, Nx),
+              by = c("genero", "edad+1" = "edad")) %>%
+  rename(`N_(x+1)` = Nx) %>% 
+    left_join(select(arg_conmutados_jubilados, genero, edad, Dx),
+              by = c("genero","edad")) %>%
+    mutate(`a_x^(m)` = `N_(x+1)` / Dx, 
+           `a_x^(12)` = `a_x^(m)` + 11/24,
+           `a_x^(2)` = `a_x^(m)` + 1/4, 
+           reserva_jubilados_vejez = 
+             suma_pensiones * (12 * `a_x^(12)` * (1 + porcentaje_salud) +
+                                 2*`a_x^(2)`)) 
+```
+
+#### Beneficios concedidos vejez - viudez
+
+Describimos su modelo actuarial para el computo, como también el bloque de código dentro de la función `calculate_beneficios_concedidos` que nos realiza el cálculo de estos beneficios: $$PS_{x,y} = TR_{viu}\times \sum_{n=0}^{\omega - x} S_{x,y}^n\times \frac{l_{x+n}}{l_x}\times q_{x+n}\times v^n\times PJ\times (1+j)^n$$
+
+donde:
+
+-   $PS_{x,y}:$ Valor presente de la pensión por sobrevivencia en el año $n$ para el caso de viudez.
+-   $TR_{viu}:$ Tasa de reemplazo por viudez.
+-   $PJ:$ Pensión por jubilación
+-   $S_{x,y}^n = 14\cdot a_{y+n} + 6$
+-   $a_{y+n} = \frac{\sum_{iter = 1}^{\omega - y - n}l_{y + n + iter}}{v^{y+n}l_{y+n}}:$ renta vitalicia contingente con una tasa $r = \frac{1+i}{1+j} - 1$
+-   $l_x:$ Total de jubilados a la edad de $z$ años
+-   $q_x:$ Probabilidad de fallecer entre $z$ y $z+1$ años.
+
+```{r eval=FALSE}
+ reserva_jubilados_vejez_viudez <-  resumen_jubilados_vejez_viudez %>% 
+    filter(edad <= w) %>% 
+    mutate(`w-edad` = w - edad) %>% 
+    group_by_all() 
+  
+  reserva_jubilados_vejez_viudez <- reserva_jubilados_vejez_viudez %>% 
+    expand(n = 0:reserva_jubilados_vejez_viudez$`w-edad`) %>% 
+    ungroup() %>% 
+    mutate(`edad+n` = edad + n,
+           `edad_pareja+n` = edad_pareja + n, 
+           `edad_pareja+n+1` = `edad_pareja+n` + 1) %>%
+    left_join(select(arg_conmutados_jubilados, genero, edad, l_x, q_x),
+              by = c("genero", "edad+n" = "edad")) %>%
+    rename(`l_(x+n)` = l_x, `q_(x+n)` = q_x) %>%
+    left_join(select(arg_conmutados_jubilados, genero, edad, l_x),
+              by = c("genero", "edad")) %>% 
+    left_join(select(arg_conmutados_jubilados, genero, edad, Nx), 
+          by = c("genero_pareja" = "genero", "edad_pareja+n+1" = "edad"))%>% 
+    rename(`N_(y+n+1)` = Nx) %>% 
+    left_join(select(arg_conmutados_jubilados, genero, edad, Dx), 
+          by = c("genero_pareja" = "genero","edad_pareja+n" = "edad"))%>% 
+    rename(`D_(y+n)` = Dx) %>% 
+    mutate(`a_y^(m)` = `N_(y+n+1)` / `D_(y+n)`, 
+           `S_(x,y)^(n)` = 14*`a_y^(m)` + 6,
+           reserva_jubilados_vejez_viudez =
+   tasa_reemplazo_viudez*`S_(x,y)^(n)`*`l_(x+n)`/l_x*`q_(x+n)`*(1 + 
+ tasa_interes)^-(n)*suma_pensiones)
+
+```
+
+#### Beneficios concedidos vejez - orfandad
+
+$$PS_{x,y} = TR_{orf}\times \sum_{n=0}^{\min (xorf, \omega-x)} S_{x,y}^n\times \frac{l_{x+n}}{l_x}\times q_{x+n}\times v^n \times PJ\times (1+j)^n$$
+
+donde:
+
+-   $PS_{x,y}:$ Valor presente por sobrevivencia en el año $n$ para el caso de orfandad.
+-   $TR_{orf}:$ Tasa de reemplazo orfandad.
+-   $PJ:$ Pensión por jubilación.
+-   $S_{x,y}^n = \left[\begin{array}{c} 1 - \frac{v^{xorfa - n}}{r}\end{array}\right]\left[\begin{array}{c}\frac{12(1-v)}{i^{(12)}} + \frac{2(1-v)}{i^{(2)}}\end{array}\right]:$ renta cierta pagadera $xorfa$ años.
+-   $i^{(12)} = 12[(1+i)^{1/12}-1]$
+-   $i^{(2)} = 2[(1+i)^{1/2} - 1]$
+-   $v^{orfa - n} = \frac{1}{(1+r)^{xorfa - n}}$
+-   $v = \frac{1}{1+i}$
+-   $xorfa = \max (Emh - Eh, 0):$ cantidad de años que el huerfano recibira la pensión.
+-   $l_z:$ Total de jubilados a la edad de $z$ años.
+-   $q_x:$ Probabilidad de fallecer entre $z$ y $z+1$ años.
+
+```{r eval=FALSE}
+reserva_jubilados_vejez_orfandad <- 
+  resumen_jubilados_vejez_orfandad %>% 
+    filter(edad <= w, edad_hijo <= edad_maxima_orfandad) %>% 
+    mutate(`w-edad` = w - edad, 
+           xorfa = pmax(0, edad_maxima_orfandad - edad_hijo ),
+           num_n = pmin(xorfa, `w-edad`)) %>% 
+    group_by_all() 
+  
+  
+  reserva_jubilados_vejez_orfandad <- reserva_jubilados_vejez_orfandad%>% 
+    expand(n = 0:reserva_jubilados_vejez_orfandad$num_n) %>% 
+    ungroup() %>% 
+    mutate(`edad+n` = edad + n,
+           `edad_hijo+n` = edad_hijo + n) %>% 
+    filter(`edad_hijo+n` <= edad_maxima_orfandad) %>% 
+    left_join(select(arg_conmutados_jubilados, genero, edad, l_x, q_x),
+              by = c("genero", "edad+n" = "edad")) %>% 
+    rename(`l_(x+n)` = l_x, `q_(x+n)` = q_x) %>%
+    left_join(select(arg_conmutados_jubilados, genero, edad, l_x), 
+              by = c("genero", "edad")) %>% 
+    mutate(v_interes = 1/(1 + tasa_interes),
+           v_rendimiento = 1/(1 + tasa_rendimiento_nominal),
+           `i^(12)` = ((1 + tasa_rendimiento_nominal)^(1/12) - 1)*12,
+           `i^(2)`  = ((1 + tasa_rendimiento_nominal)^(1/2)  - 1)*2,
+           `v_interes^(num_n-n)` = 
+             v_interes(reserva_jubilados_vejez_orfandad$num_n-n),
+           `S_O_J(x, y)^n` =  (1 - `v_interes^(num_n-n)`)/tasa_interes * 
+             ( 12*(1-  v_rendimiento)/`i^(12)` + 
+                 2*(1- v_rendimiento)/`i^(2)`),
+           reserva_jubilados_vejez_orfandad = tasa_reemplazo_orfandad * 
+             `S_O_J(x, y)^n` *  `l_(x+n)` / l_x * `q_(x+n)` * 
+             v_rendimiento^n * suma_pensiones * ( 1 + tasa_inflacion)^n)
+```
+
+#### Beneficios concedidos de gastos funerarios jubilados por vejez
+
+$$VpGF = s\times \frac{\sum_{n=1}^{\omega - x} v^{x+n}d_{x+n-1}}{v^xl_x}\times SR_{ej}\times n_beneficiarios$$
+
+donde:
+
+-   $VpGF:$ Valor presente de los gastos funerarios.
+-   $SR_{ej}:$ Salario de referencia a la edad de jubilación.
+-   $s = 50\%:$ Porcentaje de gastos funerarios.
+-   $l_z:$ Total de jubilados a la edad de $z$ años.
+-   $d_x:$ Total de jubilados que fallecen a la edad de $z$ años.
+
+```{r eval=FALSE}
+  gastos_funerarios_jubilados_vejez <-  resumen_jubilados_vejez %>% 
+    filter(edad <= w) %>% 
+    left_join(select(arg_conmutados_jubilados, genero, edad,  Dx, Mx), 
+              by = c("genero",  "edad"))  %>%
+    mutate(gastos_funerarios_jubilados_vejez = porcentaje_gastos_funerarios * 
+             salario_de_referencia_sepelio * Mx /Dx * n_beneficios)
+```
+
+#### Beneficios concedidos por invalidez
+
+$$RI_x = PI\times (12\cdot a^{(12)}\cdot(1 + \%salud) + 2\times a_{x}^{(2)})$$
+
+donde:
+
+-   $RI_x:$ beneficio de pensiones por invalidez
+-   $PI:$ suma pensiones
+-   $a^{(m)}= \frac{N_{x+1}}{D_x}$
+-   $a_x^{(12)} = a_{x}^{(m)} + \frac{11}{24}$
+-   $a_{x}^{(2)} = a_{x}^{(m)} + \frac{1}{4}$
+
+```{r eval=FALSE}
+  reserva_pensiones_invalidez <-  resumen_pensiones_invalidez %>% 
+    mutate(`edad+1` = edad + 1) %>% 
+    left_join(select(arg_conmutados_invalidos, genero, edad, Nx),
+              by = c("genero", "edad+1" = "edad")) %>%
+    rename(`N_(x+1)` = Nx) %>% 
+    left_join(select(arg_conmutados_invalidos, genero, edad, Dx),
+              by = c("genero","edad")) %>%
+    mutate(`a_x^(m)` = `N_(x+1)` / Dx, 
+           `a_x^(12)` = `a_x^(m)` + 11/24,
+           `a_x^(2)` = `a_x^(m)` + 1/4, 
+           reserva_pensiones_invalidez = suma_pensiones * (12 * `a_x^(12)` *
+                                     (1 +  porcentaje_salud) + 2*`a_x^(2)`)) 
+```
+
+#### Beneficios concedidos invalidez - Viudez
+
+$$PS_{x,y} = TR_{viu} + \sum_{n = 0}^{\omega - x}S_{x,y}^{n}\cdot q_{x+n}\cdot v^n\cdot PI$$
+
+donde:
+
+-   $PS_{x,y}:$ beneficio pensiones invalidez - viudez
+-   $TR_{viu}:$ tasa de remplaza viudez
+-   $PI:$ suma pensiones
+-   $a_{y}^{(m)} = \frac{N_{y+n+1}}{D_{y+n}}$
+-   $S_{x,y}^n = 14\times a_{y}^{(m)} + 6$
+-   $v^n = (1+tasa\_interes)^{-n}$
+
+```{r eval=FALSE}
+ reserva_pensiones_invalidez_viudez <-  
+   resumen_pensiones_invalidez_viudez %>% 
+    filter(edad <= w) %>% 
+    mutate(`w-edad` = w - edad) %>% 
+    group_by_all()
+  
+  
+  reserva_pensiones_invalidez_viudez <-
+    reserva_pensiones_invalidez_viudez%>% 
+    expand(n = 0:reserva_pensiones_invalidez_viudez$`w-edad`) %>% 
+    ungroup() %>% 
+    mutate(`edad+n` = edad + n,
+           `edad_pareja+n` = edad_pareja + n, 
+           `edad_pareja+n+1` = `edad_pareja+n` + 1) %>% 
+    left_join(select(arg_conmutados_invalidos, genero, edad, l_x, q_x),
+              by = c("genero", "edad+n" = "edad")) %>%
+    rename(`l_(x+n)` = l_x, `q_(x+n)` = q_x) %>%
+    left_join(select(arg_conmutados_invalidos, genero, edad, l_x), 
+              by = c("genero", "edad")) %>% 
+    left_join(select(arg_conmutados_invalidos, genero, edad, Nx),
+      by = c("genero_pareja" = "genero", "edad_pareja+n+1" = "edad")) %>% 
+    rename(`N_(y+n+1)` = Nx) %>% 
+    left_join(select(arg_conmutados_invalidos, genero, edad, Dx),
+       by = c("genero_pareja" = "genero","edad_pareja+n" = "edad")) %>% 
+    rename(`D_(y+n)` = Dx) %>% 
+    mutate(`a_y^(m)` = `N_(y+n+1)` / `D_(y+n)`, 
+           `S_(x,y)^(n)` = 14*`a_y^(m)` + 6,
+      reserva_pensiones_invalidez_viudez = tasa_reemplazo_viudez  *
+        `S_(x,y)^(n)` *  `l_(x+n)` / l_x * `q_(x+n)` * (1 + 
+                                tasa_interes)^-(n) * suma_pensiones)
+```
+
+#### Beneficios concedidos invalidez - Orfandad
+
+$$PS_{x,y} = TR_{orf}\times \sum_{n=0}^{\min(xorf, \omega - x)}S_{x,y}^n\cdot \frac{l_{x+n}}{l_x}\cdot q_{x+n}\cdot v^n\cdot PI$$
+
+donde:
+
+-   $P_{x,y}:$ beneficio concedido invalidez orfandad
+
+-   $TR_{orf}:$ tasa reemplazo orfandad
+
+-   $S_{x,y}^n = \left[\begin{array}{c}1 - \frac{v\_interes^{num\_n-n}}{tasa\_interes}\end{array}\right]\left[\begin{array}{c}\frac{12(1 - v\_rendimiento)}{i^{(12)}} + \frac{2(1-v\_rendimiento)}{i^{(2)}}\end{array}\right]$
+
+    -   $v\_interes^{num\_n-n} = v\_interes^{reserva\_jubilados\_vejez\_orfandad\$num\_n-n}$
+    -   $v\_interes = \frac{1}{1+tasa\_interes}$
+    -   $v\_rendimiento = \frac{1}{1+tasa\_rendimiento\_nominal}$
+    -   $i^{(12)} = 12((1 + tasa\_rendimiento\_nominal)^{\frac{1}{12}}-1)$
+    -   $i^{(12)} = 2((1+tasa\_rendimiento\_nominal)^{\frac{1}{2}} - 1)$
+    -   $xorfa = \max(0, edad\_maxima\_orfandad - edad\_hijo)$
+    -   $num\_n = \min(xorfa, \omega - edad)$
+
+```{r eval=FALSE}
+  reserva_pensiones_invalidez_orfandad <- 
+    resumen_pensiones_invalidez_orfandad %>% 
+    filter(edad <= w) %>% 
+    mutate(`w-edad` = w - edad, 
+           xorfa = pmax(0, edad_maxima_orfandad - edad_hijo ),
+           num_n = pmin(xorfa, `w-edad`)) %>% 
+    group_by_all()
+  
+  reserva_pensiones_invalidez_orfandad <- 
+    reserva_pensiones_invalidez_orfandad%>% 
+    expand(n = 0:reserva_pensiones_invalidez_orfandad$num_n) %>% 
+    ungroup() %>% 
+    mutate(`edad+n` = edad + n,
+           `edad_hijo+n` = edad_hijo + n) %>% 
+    filter(`edad_hijo+n` <= edad_maxima_orfandad) %>% 
+    left_join(select(arg_conmutados_invalidos, genero, edad, l_x, q_x), 
+              by = c("genero", "edad+n" = "edad")) %>%
+    rename(`l_(x+n)` = l_x, `q_(x+n)` = q_x) %>%
+    left_join(select(arg_conmutados_invalidos, genero, edad, l_x), 
+              by = c("genero", "edad")) %>% 
+    mutate(v_interes = 1/(1 + tasa_interes),
+           v_rendimiento = 1/(1 + tasa_rendimiento_nominal),
+           `i^(12)` = ((1 + tasa_rendimiento_nominal)^(1/12) - 1)*12,
+           `i^(2)`  = ((1 + tasa_rendimiento_nominal)^(1/2)  - 1)*2,
+           `v_interes^(num_n-n)`=
+             v_interes^(reserva_pensiones_invalidez_orfandad$num_n-n),
+           `S_O_I(x, y)^n` =  (1 - `v_interes^(num_n-n)`)/tasa_interes *
+             ( 12*(1-v_rendimiento)/`i^(12)` + 2*(1- v_rendimiento)/`i^(2)`),
+           reserva_pensiones_invalidez_orfandad = tasa_reemplazo_orfandad * 
+             `S_O_I(x, y)^n` *  `l_(x+n)` / l_x * `q_(x+n)` *
+             v_rendimiento^n * suma_pensiones * ( 1 + tasa_inflacion)^n )
+```
+
+#### Beneficio concedido por gastos funerarios invalidez
+
+$$VpGF = s\times \frac{M_x}{D_x}\times SR_{inv}\times n\_beneficiarios$$
+
+donde:
+
+-   $VPGF:$ valor presente de gastos funerarios jubilados invalidez
+-   $s:$ porcentaje gastos funerarios
+-   $SR_{ej}:$ salario de referencia sepelio
+-   $n\_beneficiarios:$ número beneficios
+-   $M_x = v^{x+n}\cdot d_{x+n-1}$
+-   $D_x = v^x\cdot l_x$
+
+```{r eval=FALSE}
+  gastos_funerarios_jubilados_invalidez <-  resumen_pensiones_invalidez %>% 
+    filter(edad <= w) %>% 
+    left_join(select(arg_conmutados_invalidos, genero, edad,  Dx, Mx), 
+              by = c("genero",  "edad"))  %>%
+    mutate(gastos_funerarios_jubilados_invalidez=porcentaje_gastos_funerarios*
+             salario_de_referencia_sepelio * Mx /Dx * n_beneficios )
+```
+
+#### Beneficio concedido por viudez
+
+$$RV_{iuy} = PV_{iu}S_{y}$$
+
+donde:
+
+-   $RV_{iuy}:$ reserva pensiones por viudez
+-   $PV_{iu}:$ suma de pensiones
+-   $S_y = 14\cdot a_{y}^m + 6$
+-   $a_y^m = \frac{N_{y+1}}{D_y}$
+
+```{r eval=FALSE}
+  reserva_pensiones_viudez <-  resumen_pensiones_viudez %>% 
+    mutate(`edad+1` = edad + 1) %>% 
+    left_join(select(arg_conmutados_jubilados, genero, edad, Nx), 
+              by = c("genero", "edad+1" = "edad")) %>%
+    rename(`N_(y+1)` = Nx) %>% 
+    left_join(select(arg_conmutados_jubilados, genero, edad, Dx),
+              by = c("genero","edad")) %>% rename(Dy = Dx) %>% 
+    mutate(`a_y^(m)` = `N_(y+1)` / Dy, 
+           `S_y` = 14*`a_y^(m)` + 6,
+           reserva_pensiones_viudez = suma_pensiones * `S_y`) 
+```
+
+#### Beneficio concedido por orfandad
+
+$$RO_{rofy} = PO_{rf}\cdot m\cdot S_{x,y}$$
+
+donde:
+
+-   $RO_{rofy}:$ reserva pensiones orfandad
+
+-   $PO_{rf}:$ suma pensiones
+
+-   $S_{x,y}^n = \left[\begin{array}{c}1 - \frac{v\_interes^{num\_n-n}}{tasa\_interes}\end{array}\right]\left[\begin{array}{c}\frac{12(1 - v\_rendimiento)}{i^{(12)}} + \frac{2(1-v\_rendimiento)}{i^{(2)}}\end{array}\right]$
+
+    -   $v\_interes^{num\_n-n} = v\_interes^{reserva\_jubilados\_vejez\_orfandad\$num\_n-n}$
+    -   $v\_interes = \frac{1}{1+tasa\_interes}$
+    -   $v\_rendimiento = \frac{1}{1+tasa\_rendimiento\_nominal}$
+    -   $i^{(12)} = 12((1 + tasa\_rendimiento\_nominal)^{\frac{1}{12}}-1)$
+    -   $i^{(12)} = 2((1+tasa\_rendimiento\_nominal)^{\frac{1}{2}} - 1)$
+    -   $xorfa = \max(0, edad\_maxima\_orfandad - edad\_hijo)$
+
+```{r eval=FALSE}
+  reserva_pensiones_orfandad <- 
+    resumen_pensiones_orfandad %>% 
+    mutate(xorfa = pmax(0, edad_maxima_orfandad - edad )) %>%
+    filter(xorfa >= 0) %>%
+    group_by_all() %>% 
+    expand(n = 0:9) %>%
+    ungroup() %>% 
+    mutate(`edad+n` = edad + n,
+           v_interes = 1/(1 + tasa_interes),
+           v_rendimiento = 1/(1 + tasa_rendimiento_nominal),
+           `i^(12)` = ((1 + tasa_rendimiento_nominal)^(1/12) - 1)*12,
+           `i^(2)`  = ((1 + tasa_rendimiento_nominal)^(1/2)  - 1)*2,
+           `v_interes^(xorfa-n)` = v_interes^(9-n),
+           `S_O(x, y)^n` =  (1 - `v_interes^(xorfa-n)`)/tasa_interes * 
+             ( 12*(1 - v_rendimiento)/`i^(12)` + 2*(1- 
+                                               v_rendimiento)/`i^(2)`),
+           reserva_pensiones_orfandad = suma_pensiones * `S_O(x, y)^n`) 
+```
+
+#### Beneficio concedido por Ascendencia
+
+$$RA_{scy} = PA_{sc}\cdot S_y$$
+
+donde:
+
+-   $RA_{scy}:$ reserva pensiones por ascendencia
+-   $PA_{sc}:$ suma pensiones
+-   $S_y = 14\cdot s_y^{(m)} + 6$
+-   $a_{y}^{(m)} = \frac{N_{y+1}}{N_y}$
+
+```{r eval=FALSE}
+  reserva_pensiones_ascendencia <-  resumen_pensiones_ascendencia %>% 
+    mutate(`edad+1` = edad + 1) %>% 
+    left_join(select(arg_conmutados_jubilados, genero, edad, Nx),
+              by = c("genero", "edad+1" = "edad")) %>%
+    rename(`N_(y+1)` = Nx) %>% 
+    left_join(select(arg_conmutados_jubilados, genero, edad, Dx),
+              by = c("genero","edad")) %>% rename(Dy = Dx) %>% 
+    mutate(`a_y^(m)` = `N_(y+1)` / Dy, 
+           `S_y` = 14*`a_y^(m)` + 6,
+           reserva_pensiones_ascendencia = suma_pensiones * `S_y`) 
+```
+
+Finalmente la función `calculate_beneficios_concedidos` devuelve cada uno de estos resultados previos en una pequeña tabla, que se lograr generar con el siguiente bloque de código:
+
+```{r eval=FALSE}
+# Tabla de resultados                                                       ----
+
+  bc <- tibble(beneficio = c("Vejez",
+                             "Vejez - Viudez", 
+                             "Vejez - Orfandad", 
+                             "Gastos Funerarios Vejez",
+                             "Invalidez", 
+                             "Invalidez - Viudez", 
+                             "Invalidez - Orfandad", 
+                             "Gastos Funerarios Invalidez",
+                             "Viudez",
+                             "Orfandad",
+                             "Ascendencia"), 
+valor = c(reserva_jubilados_vejez$reserva_jubilados_vejez
+     %>% sum(na.rm = T), 
+     reserva_jubilados_vejez_viudez$reserva_jubilados_vejez_viudez 
+     %>% sum(na.rm = T) ,
+     reserva_jubilados_vejez_orfandad$reserva_jubilados_vejez_orfandad 
+     %>% sum(na.rm = T),
+     gastos_funerarios_jubilados_vejez$gastos_funerarios_jubilados_vejez 
+     %>% sum(na.rm = T),
+     reserva_pensiones_invalidez$reserva_pensiones_invalidez 
+     %>% sum(na.rm = T) ,
+     reserva_pensiones_invalidez_viudez$reserva_pensiones_invalidez_viudez 
+     %>% sum(na.rm = T),
+     reserva_pensiones_invalidez_orfandad$reserva_pensiones_invalidez_orfandad
+     %>% sum(na.rm = T),
+     gastos_funerarios_jubilados_invalidez$gastos_funerarios_jubilados_invalidez
+     %>% sum(na.rm = T),
+     reserva_pensiones_viudez$reserva_pensiones_viudez 
+     %>% sum(na.rm = T),
+     reserva_pensiones_orfandad$reserva_pensiones_orfandad
+     %>% sum(na.rm = T),
+     reserva_pensiones_ascendencia$reserva_pensiones_ascendencia 
+     %>% sum(na.rm = T)))
+
+bc_2 <- bc %>% filter(beneficio %in% c("Vejez", "Invalidez")) %>%
+mutate(valor = valor *  pull(arg_supuestos[arg_supuestos$supuesto == 
+                                         "porcentaje_salud", 2 ]))
+
+bc_3 <- tibble(beneficio = c("Vejez - Salud", "Invalidez - Salud"), 
+         valor = bc_2$valor)
+bc_4 <- bind_rows(bc[1,], bc_3[1,], bc[2:5,], bc_3[2,], bc[6:11,] )
+bc_5 <- tibble(beneficio = c("TOTAL"), valor = sum(bc_4$valor))
+beneficios_concedidos   <- bind_rows(bc_4, bc_5) %>%
+mutate(tipo_beneficio = "Beneficio Concedido")
+
+rm(bc, bc_2, bc_3, bc_4, bc_5)
+
+  
+  return(beneficios_concedidos)
+}
+```
+
+Claramente cada uno de estos cómputos estan sustentados en la `Nota Técnica Valuación Actuarial del Régimen de IVM.`
+
+### process_04_beneficios_por_conceder.R
+
+Este `script` contiene las funciones de valor presente correspondientes para realizar el cálculo de los diferentes beneficios por conceder del Régimen del Seguro de Previsión Social. Se podrá dar cuenta que la estructura de este `script` es bastante similar a *`process_04_beneficios_concedidos.R`*. Este tipo de beneficios por conceder son:
+
+-   Beneficio por conceder vejez
+
+    -   Beneficio por conceder vejez - salud
+    -   Beneficio por conceder vejez - viudez
+    -   Beneficio por conceder vejez - orfandad
+
+-   Beneficio por conceder invalidez
+
+    -   Beneficio por conceder invalidez - salud
+    -   Beneficio por conceder invalidez - viudez
+    -   Beneficio por conceder invalidez - orfandad
+
+-   Beneficio por conceder viudez
+
+-   Beneficio por conceder orfandad
+
+-   Beneficio por conceder gastos funerarios
+
+-   Beneficio por conceder total
+
+A continuación vamos a presentar la función que se creo para que realice todos estos cómputos de cada uno de los beneficios por conceder. La idea central es que el lector comprenda cada bloque de la función, por ello se desgloza cada parte del bloque de código que representa un beneficio por conceder en conjunto con su modelo actuarial correspondiente.
+
+```{r eval=FALSE}
+# Beneficios por conceder
+
+calculate_beneficios_por_conceder <- 
+  function(arg_supuestos, arg_resumen_cotizantes_activos,
+           arg_resumen_cotizantes_activos_parejas,
+           arg_resumen_cotizantes_activos_hijos,
+           arg_tabla_decrementos_multiples, arg_conmutados_jubilados,
+                                        arg_conmutados_invalidos) {
+# arg_supuestos             ----
+  jubilacion_hombre_reglamento <- arg_supuestos[arg_supuestos$supuesto ==
+                                         "jubilacion_hombre_reglamento", 2 ] 
+  %>% pull()
+  jubilacion_mujer_reglamento  <- arg_supuestos[arg_supuestos$supuesto ==
+                                            "jubilacion_mujer_reglamento", 2 ]
+  %>% pull()
+  tiempo_minimo_cotizaciones   <- arg_supuestos[arg_supuestos$supuesto ==
+                                            "tiempo_minimo_cotizaciones", 2 ] 
+  %>% pull()# en anios
+  tiempo_postergacion_hombre   <- arg_supuestos[arg_supuestos$supuesto ==
+                                            "tiempo_postergacion_hombre", 2 ]
+  %>% pull() # en anios
+  tiempo_postergacion_mujer    <- arg_supuestos[arg_supuestos$supuesto ==
+                                             "tiempo_postergacion_mujer", 2 ]  
+  %>% pull()# en anios
+  tasa_rendimiento_nominal     <- arg_supuestos[arg_supuestos$supuesto ==
+                                             "tasa_rendimiento_nominal", 2 ] 
+  %>% pull()
+  tasa_inflacion               <- arg_supuestos[arg_supuestos$supuesto == 
+                                              "tasa_inflacion", 2 ]
+  %>% pull()
+  tasa_interes                 <- (1 + tasa_rendimiento_nominal) /
+    (1 + tasa_inflacion)-1
+  tasa_incremento_salarial     <- arg_supuestos[arg_supuestos$supuesto ==
+                                              "tasa_incremento_salarial", 2 ] 
+  %>% pull()
+  porcentaje_salud             <- 0
+  tasa_reemplazo_viudez        <- arg_supuestos[arg_supuestos$supuesto ==
+                                               "tasa_reemplazo_viudez", 2 ]
+  %>% pull()
+  tasa_reemplazo_orfandad      <- arg_supuestos[arg_supuestos$supuesto ==
+                                               "tasa_reemplazo_orfandad", 2 ] 
+  %>% pull()
+  tiempo_minimo_cotizaciones_invalidez <- arg_supuestos[arg_supuestos$supuesto ==                                                       "tiempo_minimo_cotizaciones_invalidez", 2 ] 
+  %>% pull()
+  edad_maxima_orfandad                 <- arg_supuestos[arg_supuestos$supuesto ==
+                                               "edad_maxima_orfandad", 2 ]
+  %>% pull()
+  porcentaje_gastos_funerarios         <- arg_supuestos[arg_supuestos$supuesto ==
+                                               "porcentaje_gastos_funerarios", 2 ]
+  %>% pull()
+  techo_cotizacion                     <- arg_supuestos[arg_supuestos$supuesto ==                                                     "salario_techo_cotizacion_siguiente_anio", 2 ] 
+  %>% pull()
+  
+  v_rendimiento  <- 1 / (1 + tasa_rendimiento_nominal)
+  v_tasa_interes <- 1 / (1 + tasa_interes)
+  v_inflacion    <- 1 / (1 + tasa_inflacion)
+  v_incremento_salarial <- 1 / (1 + tasa_incremento_salarial)
+  w <- max(arg_conmutados_jubilados$edad) # Edad maxima a analizar
+  # Tabla de Edades de Jubilacion                                         
+  tabla_edades_jubilacion_reglamento <-
+    tibble(genero = c("masculino", "femenino"), edad_jubilacion = 
+             c(jubilacion_hombre_reglamento, jubilacion_mujer_reglamento))
+  
+  # Tabla Tiempos de Postergacion                                         
+  
+  tabla_tiempos_postergacion <- 
+    tibble(genero = c("masculino", "femenino"),
+           tiempo_postergacion = c(tiempo_postergacion_hombre,
+                                   tiempo_postergacion_mujer))
+```
+
+#### Beneficio por conceder pensión por vejez
+
+$$RP_{x,n} = PV\times S_{x+nrs}^{(m)}\times v^{nrs}\times \frac{l_{x+nrs}}{l_x}$$
+
+donde:
+
+-   $RP_{x,n}:$ reserva pensión por vejez
+
+-   $PV:$ suma pensión por vejez
+
+-   $S_{x+nrs} = 12a\times\left(\begin{array}{c}a_{x+nrs}^{(m)} + \frac{11}{24}\end{array}\right)\times (1 + \%salud)\times v^{nrs}\times \frac{l_{x+nrs}}{l_x}$
+
+    -   $a_{x+nrs}^{(m)} = \frac{N_{x+nrs+1}}{D_{x+nrs}}$
+
+    -   $v^{nrs} = v\_rendimiento^{nrs}$
+
+```{r eval=FALSE}
+
+# Pensiones por vejez                                                 
+  # Tabla NRS Vejez                                                       
+  tabla_nrs <- arg_resumen_cotizantes_activos %>%
+    left_join(tabla_edades_jubilacion_reglamento, by = "genero") %>%
+    left_join(tabla_tiempos_postergacion, by = "genero") %>%
+    mutate(edad_jubilacion = pmax(edad_jubilacion, edad +
+                        tiempo_minimo_cotizaciones - anios_cotizados),
+        nrs = pmax(pmax(edad_jubilacion - edad, tiempo_minimo_cotizaciones -
+                             anios_cotizados) + tiempo_postergacion, 1),
+           `edad+nrs` = edad + nrs,
+           `edad+nrs+1` = `edad+nrs`+ 1)
+  
+  
+  # Calculo de salario de referencia a la edad de jubilacion (F_vejez)    
+  tabla_F <- tabla_nrs %>%
+    select(nrs) %>%
+    unique() %>%
+    group_by_all() %>%
+    mutate(l = list(0:14)) %>%
+    unnest(cols = c(l)) %>%
+    ungroup() %>%
+    mutate(F_ = (1 + tasa_incremento_salarial)^(nrs - l - 1) *
+             (1 + tasa_inflacion)^l / 15) %>%
+    group_by(nrs) %>%
+    summarise(F_vejez = sum(F_)) %>%
+    ungroup()
+  # Calculo de pension por vejez                                          
+  tabla_nrs <- tabla_nrs %>%
+    mutate(t = nrs + anios_cotizados,
+           `TR_(x+nrs)` = 
+             ifelse(t == tiempo_minimo_cotizaciones & (edad + nrs) >=
+                      edad_jubilacion, 0.5,
+                      ifelse(t > tiempo_minimo_cotizaciones & (edad + nrs) ==
+                             edad_jubilacion, 0.5 + 
+                          (t-tiempo_minimo_cotizaciones)*0.01, 0.5 +                               (t-tiempo_postergacion-tiempo_minimo_cotizaciones)*0.01 + 
+                                          tiempo_postergacion*0.03)),
+           
+           `TR_(x+nrs)`= pmin(`TR_(x+nrs)`,0.8)) %>%
+    left_join(tabla_F,  by = "nrs") %>%
+    mutate(factor_pension_vejez = `TR_(x+nrs)` * F_vejez,
+           suma_pension_vejez = factor_pension_vejez * suma_salarios)
+  
+  arg_cotizantes_activos_PV <- tabla_nrs %>%
+    mutate(pension_vejez = factor_pension_vejez * techo_cotizacion) 
+  
+  
+    reserva_vejez <- tabla_nrs %>%
+    left_join(select(arg_conmutados_jubilados, genero, edad, Dx), 
+              by = c("genero", "edad+nrs" = "edad")) %>%
+    rename(`D_(x+nrs)` = Dx) %>%
+    left_join(select(arg_conmutados_jubilados, genero, edad, Nx),
+              by = c("genero", "edad+nrs+1" = "edad")) %>% 
+    rename(`N_(x+nrs+1)` = Nx) %>%
+    mutate( `a_(x+nrs)^(m)` = `N_(x+nrs+1)`/ `D_(x+nrs)`,
+            `S_(x+nrs)^(m)` = 12 * (`a_(x+nrs)^(m)` + 11/24)*(1 +
+                                    porcentaje_salud) +2*(`a_(x+nrs)^(m)` +
+                                                            1/2)) %>%
+    left_join(select(arg_tabla_decrementos_multiples, genero, edad, `l_x^t`), 
+              by = c("genero", "edad+nrs" = "edad")) %>%  
+    rename(`l_(x+nrs)^t` = `l_x^t`) %>%
+    left_join(select(arg_tabla_decrementos_multiples, genero, edad, `l_x^t`), 
+              by = c("genero", "edad")) %>%
+    mutate(parte_1 = suma_pension_vejez * `S_(x+nrs)^(m)`,
+           parte_2 = v_rendimiento^nrs * `l_(x+nrs)^t` / `l_x^t`,
+           reserva_vejez   =  parte_1 * parte_2)
+```
+
+#### Beneficio por conceder invalidez
+
+$$RPI_{x} = \sum_{n=0}^{nrs-1} SR_{xn}\times TR_{x+n}\times \left(\begin{array}{c}12a_{x+n}^{(12)}\cdot (1 + \%salud) + 2a_{x+n}^{(2)}\end{array}\right)\times v^n\times\frac{l_{x+n}}{l_x}\times q_{x+n}^i$$
+
+donde:
+
+-   $RPI_x:$ reserva pensiones invalidez
+
+-   $SR_{xn} = F\_{invalidez}\times S_m$
+
+    -   $F\_invalidez = \frac{\sum_{l=0}^{l = \min(14,años\_cotizados + n)} (1+k)^{n=l}(1+j)^l}{\min(14, años\_cotizaciones+n) + 1}$
+
+        -   $l = l\_iteraciones$
+
+        -   $k=$ tasa de incremento salarial
+
+        -   $j=$ tasa de inflación
+
+    -   $S_m=$ suma de salarios
+
+-   $a_{x+n}^{(m)} = \frac{N_{x+n+1}}{D_{x+n}}$
+
+```{r eval=FALSE}
+ # Pensiones por Invalidez                                               
+  # Tabla NRS Invalidez                                               
+  
+  tabla_nrs_invalidez <- tabla_nrs
+  setDT(tabla_nrs_invalidez)
+  
+  tabla_nrs_invalidez[, .(n = c(0:(nrs - 1))),
+                      by = names(tabla_nrs_invalidez)]  %>%
+    .[, `:=` (`edad+n` = edad + n)] %>%
+    .[, `:=` (`edad+n+1` = `edad+n` + 1) ]  -> tabla_nrs_invalidez
+  
+  # Calculo Salario de referencia a la edad de invalidez (F_invalidez)  
+  
+  copy(tabla_nrs_invalidez)[, .(anios_cotizados, n)] %>%
+    unique() %>%
+    .[, `:=`(`anios_cotizados+n` = anios_cotizados + n)] %>%
+    .[, `:=`(l_iteraciones = pmin(`anios_cotizados+n`, 14))] %>%
+    .[, .(l = c(0:l_iteraciones)), by = names(.)] %>%
+    .[, F_ := (1 + tasa_incremento_salarial)^(n - l) * 
+        (1 + tasa_inflacion)^l / (l_iteraciones + 1)] %>%
+    .[,.(F_invalidez = sum(F_)), keyby = .(anios_cotizados, n)] ->
+    tabla_F_invalidez
+  
+  # Calculo de pension por invalidez                                    
+  
+  setDT(arg_cotizantes_activos_PV)
+  
+  arg_cotizantes_activos_PV_casado <-
+    arg_resumen_cotizantes_activos_parejas %>%
+    left_join(select(arg_cotizantes_activos_PV, genero, edad, 
+                     anios_cotizados,  nrs,
+                     factor_pension_vejez, pension_vejez),
+              by = c("genero", "edad", "anios_cotizados"))
+  
+  arg_cotizantes_activos_PV_orfandad <-
+    arg_resumen_cotizantes_activos_hijos %>%
+    left_join(select(arg_cotizantes_activos_PV, genero, edad,
+                     anios_cotizados,  nrs, 
+                     factor_pension_vejez, pension_vejez),
+              by = c("genero", "edad", "anios_cotizados"))
+  
+  arg_cotizantes_activos_PV %>%
+    as.data.table() %>% copy() %>%
+    .[, .(n = c(0:(nrs - 1))), by = names(.)]  %>%
+    .[, `:=` (`edad+n` = edad + n,
+              `edad+n+1` = edad + n + 1)] %>%
+    .[tabla_F_invalidez, on = .(anios_cotizados, n),
+      `:=`(F_invalidez = i.F_invalidez)] %>%
+    .[, t_ := (n + anios_cotizados) ] %>%
+    .[,  `TR_(x+n)` := ifelse(t_ < tiempo_minimo_cotizaciones_invalidez,
+                              0.4,
+                              0.4 + 0.01*(t_ - 
+                          tiempo_minimo_cotizaciones_invalidez))] %>%
+    .[,  `TR_(x+n)` := pmin(`TR_(x+n)`,0.8)] %>%
+    .[, factor_pension_invalidez := `TR_(x+n)` * F_invalidez]  %>%
+    .[, suma_pension_invalidez := factor_pension_invalidez * suma_salarios] ->
+    arg_cotizantes_activos_PI
+
+  arg_cotizantes_activos_PV_casado %>%
+    as.data.table() %>% copy() %>%
+    .[, .(n = c(0:(nrs - 1))), by = names(.)]  %>%
+    .[, `:=` (`edad+n` = edad + n,
+              `edad_pareja+n` = edad_pareja + n)] %>%
+    .[tabla_F_invalidez, on = .(anios_cotizados, n),
+      `:=`(F_invalidez = i.F_invalidez)] %>%
+    .[, t_ := (n + anios_cotizados) ] %>%
+    .[,  `TR_(x+n)` := ifelse(t_ < tiempo_minimo_cotizaciones_invalidez,
+                              0.4,
+                              0.4 + 0.01*(t_ -
+                                tiempo_minimo_cotizaciones_invalidez))] %>%
+    .[,  `TR_(x+n)` := pmin(`TR_(x+n)`,0.8)] %>%
+    .[, factor_pension_invalidez := `TR_(x+n)` * F_invalidez]  %>%
+    .[, suma_pension_invalidez := factor_pension_invalidez * suma_salarios] ->
+    arg_cotizantes_activos_PI_casado
+  
+  arg_cotizantes_activos_PV_orfandad %>%
+    as.data.table() %>% copy() %>%
+    .[, .(n = c(0:(nrs - 1))), by = names(.)]  %>%
+    .[, `:=` (`edad+n` = edad + n,
+              `edad_hijo+n` = edad_hijo + n)] %>%
+    .[tabla_F_invalidez, on = .(anios_cotizados, n),
+      `:=`(F_invalidez = i.F_invalidez)] %>%
+    .[, t_ := (n + anios_cotizados) ] %>%
+    .[,  `TR_(x+n)` := ifelse(t_ < tiempo_minimo_cotizaciones_invalidez,
+                              0.4,
+                              0.4 + 0.01*(t_ -
+                              tiempo_minimo_cotizaciones_invalidez))] %>%
+    .[,  `TR_(x+n)` := pmin(`TR_(x+n)`,0.8)] %>%
+    .[, factor_pension_invalidez := `TR_(x+n)` * F_invalidez]  %>%
+    .[, suma_pension_invalidez := factor_pension_invalidez * suma_salarios] ->
+    arg_cotizantes_activos_PI_orfandad
+  
+    reserva_invalidez <-
+    copy(arg_cotizantes_activos_PI)[arg_conmutados_invalidos %>%
+                                      as.data.table %>% copy %>% 
+                                      setnames(old = "edad", new = "edad+n"),
+                                    on = .(genero , `edad+n`),
+                                    `:=` (`D_(x+n)` = i.Dx)] %>%
+    .[arg_conmutados_invalidos %>% as.data.table %>% copy %>%
+        setnames(old = "edad", new = "edad+n+1"),
+      on = .(genero , `edad+n+1`),
+      `:=` (`N_(x+n+1)` = i.Nx)] %>%
+    .[arg_tabla_decrementos_multiples %>% as.data.table %>% copy %>%
+        setnames(old = c("edad", "l_x^t", "q^i"),
+                 new = c("edad+n", "l_x_ala_t", "q_i_ala_t")),
+      on = .(genero , `edad+n`),
+      `:=` (`l_(x+n)^t` = i.l_x_ala_t,
+            `q^i` = i.q_i_ala_t)] %>%
+    .[arg_tabla_decrementos_multiples %>% as.data.table %>% copy %>% 
+        setnames(old = c("l_x^t" ), new = c("l_x_ala_t")),
+      on = .(genero , edad),
+      `:=` (`l_x^t` = i.l_x_ala_t)] %>%
+    .[, `:=` (`a_(x+n)^(m)` = `N_(x+n+1)`/ `D_(x+n)`)] %>%
+    .[, `:=` (`S_(x+n)^(m)` = 12 * (`a_(x+n)^(m)` + 11/24)*(1 + 
+                                     porcentaje_salud) +2*(`a_(x+n)^(m)` +
+                                                             1/2))] %>%
+    .[, `:=` (parte_1 = F_invalidez * suma_salarios * `TR_(x+n)` * `S_(x+n)^(m)`,
+              parte_2 = v_rendimiento^n  * `l_(x+n)^t` / `l_x^t` * `q^i`)] %>%
+    .[, `:=` (reserva_invalidez =  parte_1 * parte_2)] %>%
+    as_tibble()
+```
+
+#### Beneficio por conceder vejez - viudez
+
+$$PS_{x,yi}J = TR_{sobi}\times PV\times A \times v^{nrs}\times \sum_{n=0}^{\omega-nrs-x}S_{x,yi}^n\cdot \frac{l_{x+nrs+n}}{l_{x+nrs}}\times q_{x+nrs+n}\times v^n$$
+
+donde:
+
+-   $PS_{x,yi}J:$ reserva vejez viudez
+-   $TR_{sobi}:$ tasa de reemplazo viudez
+-   $PV:$ suma de pensiones por vejez
+-   $A = \frac{l_{x+nrs}^\tau}{l_x^\tau}$
+-   $v^{nrs} = v\_rendimiento^{nrs}$
+-   $S_{x,yi}J^n = 14\times a_{y+nrs+n} + 6$
+-   $a_{y+nrs+n}^{(m)} = \frac{N_{y + nrs + n +1}}{D_{y + nrs + n}}$
+
+```{r eval=FALSE}
+  reserva_vejez_viudez <- arg_cotizantes_activos_PV_casado %>%
+    mutate(suma_pension_vejez = factor_pension_vejez * suma_salarios,  
+           #cotizantes_activos_casados * pension_vejez
+           num_n = w - nrs - edad) %>%
+    filter(num_n >= 0) %>%
+    group_by_all() %>%
+    mutate(n = list(0:num_n)) %>%
+    unnest(cols = c(n)) %>%
+    ungroup() %>%
+    mutate(`edad+nrs` = edad+nrs,
+           `edad+nrs+n` = `edad+nrs` + n,
+           `edad_pareja+nrs+n`   = edad_pareja + nrs + n,
+           `edad_pareja+nrs+n+1` = `edad_pareja+nrs+n` + 1) %>%
+    left_join(select(arg_conmutados_jubilados, genero, edad, Dx),
+        by = c("genero_pareja" = "genero", "edad_pareja+nrs+n" = "edad")) %>%
+    rename(`D_(y+nrs+n)` = Dx) %>%
+    left_join(select(arg_conmutados_jubilados, genero, edad, Nx),
+        by = c("genero_pareja"= "genero", "edad_pareja+nrs+n+1" = "edad"))  %>%
+    rename(`N_(y+nrs+n+1)` = Nx) %>%
+    mutate(`a_(y+nrs+n)^(m)` = `N_(y+nrs+n+1)` / `D_(y+nrs+n)`,
+           `S_(x, y)^n` = 14 * `a_(y+nrs+n)^(m)` + 6) %>%
+    left_join(select(arg_conmutados_jubilados, genero, edad, l_x ,q_x),
+              by = c("genero", "edad+nrs+n" = "edad")) %>% 
+    rename(`l_(x+nrs+n)` = l_x ,`q_(x+nrs+n)` = q_x) %>%
+    left_join(select(arg_conmutados_jubilados, genero, edad, l_x ),      
+              by = c("genero", "edad+nrs" = "edad")) %>% 
+    rename(`l_(x+nrs)` = l_x ) %>%
+    left_join(select(arg_tabla_decrementos_multiples, genero, edad, `l_x^t`),
+              by = c("genero", "edad+nrs" = "edad")) %>%
+    rename(`l_(x+nrs)^t` = `l_x^t`) %>%
+    left_join(select(arg_tabla_decrementos_multiples, genero, edad, `l_x^t`), 
+              by = c("genero",  "edad")) %>%
+    mutate(A = `l_(x+nrs)^t` / `l_x^t`,
+           parte_1 = tasa_reemplazo_viudez *suma_pension_vejez *
+             `S_(x, y)^n` * A * v_rendimiento^nrs ,
+           parte_2 = `l_(x+nrs+n)` / `l_(x+nrs)` * `q_(x+nrs+n)` *
+             v_tasa_interes^n,reserva_vejez_viudez  = parte_1 * parte_2 )  %>%
+    select(-num_n)
+```
+
+#### Beneficio por conceder vejez - orfandad
+
+$$PS_{x,yi}J = TR_{sobi}\times PV\times \sum_{n=0}^{xorfa - (yi + nrs)} S_{x,yi}^n\cdot \frac{l_{x + nrs + n}}{l_{x+nrs}}\cdot q_{x+nrs+n}^m \cdot v^{nrs + n}$$
+
+donde:
+
+-   $yi + nrs \leq xorfa$
+-   $PS_{x,yi}J:$ reserva vejez orfandad
+-   $TR_{sobi}:$ tasa reemplazo orfandad
+-   $PV:$ suma pensiones vejez
+-   $S_{x,yi}^n = \left[\begin{array}{c}1 - \frac{v\_interes^{xorfa-n}}{tasa_interes}\end{array}\right]\left[\begin{array}{c}\frac{12(1 - v\_rendimiento)}{i^{(12)}} + \frac{2(1-v\_rendimiento)}{i^{(2)}}\end{array}\right]$
+-   $i^{(12)} = 12\left(\begin{array}{c}(1 + tasa\_rendimiento\_nominal)^{\frac{1}{12}}-1\end{array}\right)$
+-   $i^{(2)} = 2\left(\begin{array}{c}(1+tasa\_rendimiento_nominal)^{\frac{1}{2}} -1 \end{array}\right)$
+-   $xorfa = \max(0, edad\_maxima\_orfandad - edad\_hijo)$
+
+```{r eval=FALSE}
+  reserva_vejez_orfandad <- arg_cotizantes_activos_PV_orfandad %>%
+    mutate(suma_pension_vejez = factor_pension_vejez * suma_salarios,
+           #cantidad_hijos * pension_vejez
+           `edad_hijo+nrs` = edad_hijo + nrs ,
+           xorfa = pmax(0, edad_maxima_orfandad - `edad_hijo+nrs` )) %>%
+    filter(xorfa >= 0) %>%
+    group_by_all() %>%
+    mutate(n = list(0:xorfa)) %>%
+    unnest(cols = c(n)) %>%
+    ungroup() %>%
+    mutate(`edad+nrs` = edad + nrs,
+           `edad+nrs+n` = `edad+nrs` + n,
+           `i^(12)` = ((1 + tasa_rendimiento_nominal)^(1/12) - 1)*12,
+           `i^(2)`  = ((1 + tasa_rendimiento_nominal)^(1/2)  - 1)*2,
+           `S_O_J(x, y)^n` =  (1 - v_tasa_interes^(xorfa-n))/tasa_interes *
+             ( 12*(1- v_rendimiento)/`i^(12)` + 
+                 2*(1- v_rendimiento)/`i^(2)`)) %>%
+    left_join(select(arg_conmutados_jubilados, genero, edad, l_x, q_x),
+              by = c("genero", "edad+nrs+n" = "edad")) %>%
+    rename(`l_(x+nrs+n)` = l_x, `q_(x+nrs+n)` = `q_x`) %>%
+    left_join(select(arg_conmutados_jubilados, genero, edad, l_x),
+              by = c("genero", "edad+nrs" = "edad")) %>%  
+    rename(`l_(x+nrs)` = l_x) %>%
+    mutate(parte_1 = tasa_reemplazo_orfandad * suma_pension_vejez *
+             `S_O_J(x, y)^n`,
+           parte_2 = `l_(x+nrs+n)` / `l_(x+nrs)` *  `q_(x+nrs+n)` *
+             v_rendimiento^(nrs+n),
+           reserva_vejez_orfandad  = parte_1 * parte_2 )
+```
+
+#### Beneficio por conceder invalidez - viudez
+
+$$PS_{x,yi}I = \sum_{n=0}^{nra}q_{x+n}^i\times \left(\begin{array}{c}\sum_{it = 0}^{\omega-x-n}TR_{sobi}\cdot PI_{x+n,it}\cdot S_{x+n,yi+n}^{it}\cdot A\cdot q_{x+n+it}\cdot v^{it}\end{array}\right)\times v^n$$
+
+donde:
+
+-   $PS_{x,yi}I:$ reserva invalidez viudez
+-   $PI_{x+n,it}:$ suma pensión invalidez
+-   $TR_{sobi}:$ tasa reemplazo viudez
+-   $A = \frac{l_{x+n+it}^{\tau}}{l_{x+n}^{\tau}}$
+-   $v^{it} = v\_tasa\_interes^{it}$
+-   $v^n = v\_rendimiento^n$
+-   $S_{x+n,yi+n}^{it} = 14\cdot a_{y+n+it}^{(m)}$
+
+```{r eval=FALSE}
+renta_vitalicia_contingente_invalidez_viudez <- 
+  tibble(`edad_pareja+n+it`  =  
+    c(min(arg_conmutados_jubilados$edad):                                                                       max(arg_conmutados_jubilados$edad))) %>%
+    mutate(`edad_pareja+n+it+1`   = `edad_pareja+n+it` + 1) %>%
+    left_join(select(arg_conmutados_jubilados, genero, edad, Dx),
+              by = c("edad_pareja+n+it" = "edad")) %>%  
+    rename(`D_(y+n+it)` = Dx) %>%
+    left_join(select(arg_conmutados_jubilados, genero, edad, Nx), 
+              by = c("genero", "edad_pareja+n+it+1" = "edad"))  %>%
+    rename(`N_(y+n+it+1)` = Nx) %>%
+    select(genero, 1,2,4,5) %>%
+    setnames( old = "genero", new = "genero_pareja") %>%
+    arrange(genero_pareja) %>%
+    mutate(`a_(y+n+it)^(m)` = `N_(y+n+it+1)` / `D_(y+n+it)`,
+           `S_invalidez_viudez` = 14*`a_(y+n+it)^(m)` + 6) %>% 
+  as.data.table()
+  
+
+  factor_reserva_invalidez_viudez <- 
+    copy(arg_cotizantes_activos_PI_casado)[, 
+                                    .(genero, edad, nrs, 
+                                       genero_pareja, edad_pareja)] %>%
+    unique() %>%
+    .[, .(n = c(0:nrs)), by = names(.)] %>%
+    .[, .(it = c(0:(w - edad - nrs))), by = names(.)] %>%
+    .[,`:=` (`edad+n` = edad + n ,
+             `edad+n+it` = edad + n + it ,
+             `edad_pareja+n` = edad_pareja + n,
+             `edad_pareja+n+it` = edad_pareja + n + it)] %>%
+    .[arg_conmutados_invalidos %>% as.data.table %>% copy() %>%
+        setnames(old = 'edad', new = 'edad+n+it'),
+      on = .(genero, `edad+n+it`),
+      `:=`(`l_(x+n+it)` = i.l_x,
+           `q_(x+n+it)` = i.q_x)] %>%
+    .[arg_conmutados_invalidos %>% as.data.table %>% copy() %>%
+        setnames( old = 'edad', new = 'edad+n'),
+      on = .(genero, `edad+n`),
+      `:=`(`l_(x+n)` = i.l_x)] %>%
+    .[copy(renta_vitalicia_contingente_invalidez_viudez),
+      on = .(genero_pareja, `edad_pareja+n+it`),
+      `:=`( S_invalidez_viudez =  i.S_invalidez_viudez)] %>%
+    .[, `:=` (factor_reserva_invalidez_viudez = `l_(x+n+it)` / `l_(x+n)` *
+                `q_(x+n+it)` *v_tasa_interes^ it *
+                S_invalidez_viudez) ]  %>%
+    .[, by = .(genero, edad, genero_pareja, edad_pareja, nrs, n, 
+               `edad+n`, `edad_pareja+n`),
+      .(factor_reserva_invalidez_viudez = 
+          sum(factor_reserva_invalidez_viudez, na.rm = TRUE))]
+  
+  
+  
+  reserva_invalidez_viudez <-  
+    copy(arg_cotizantes_activos_PI_casado)[factor_reserva_invalidez_viudez,on =
+      .(genero, edad, genero_pareja, edad_pareja, nrs, n, 
+        `edad+n`, `edad_pareja+n`),
+      
+        factor_reserva_invalidez_viudez := 
+        i.factor_reserva_invalidez_viudez] %>%
+    .[arg_tabla_decrementos_multiples %>% as.data.table() %>% copy() %>%
+        setnames(old = c("edad","l_x^t" ,  "q^i"), 
+                 new = c("edad+n", "l_x_ala_t", "q_ala_i")),
+      on = .(genero, `edad+n`),
+      `:=` (`l_(x+n)^t` = i.l_x_ala_t,
+            `q_(x+n)^i` = i.q_ala_i)] %>%
+    .[arg_tabla_decrementos_multiples %>% as.data.table() %>% 
+        copy() %>% setnames( old = "l_x^t" , new = "l_x_ala_t"),
+      on = .(genero, edad),
+      `:=` (`l_x+^t` = i.l_x_ala_t)] %>%
+    .[, A:= `l_(x+n)^t` / `l_x+^t`] %>%
+    .[, reserva_invalidez_viudez := tasa_reemplazo_viudez  *
+        suma_pension_invalidez *
+        v_rendimiento^n * `q_(x+n)^i`* A * factor_reserva_invalidez_viudez]
+```
+
+#### Beneficio por conceder invalidez orfandad
+
+$$PS_{x,yi}I = \sum_{n=0}^{\min(xorfa, nrs-1)} q_{x+n}^i\cdot \frac{l_{x+n}^{\tau}}{l_{x}^\tau}\cdot v^n \left(\begin{array}{c}\sum_{it = 0}^{\min(xorfa-n, \omega-x-n)}TR_{sobi}\cdot PI_{x+n,it}\cdot S_{x+n,yi+n}^{it}\cdot q_{x+n + it}\cdot v^{it}\end{array}\right)$$
+
+donde:
+
+-   $PS_{x,yi}I:$ reserva invalidez orfandad
+-   $v^n = v\_rendimiento^n$
+-   $PI_{x+n,it}:$ suma pension invalidez orfandad
+-   $TR_{sobi}:$ tasa de reemplazo orfandad
+-   $S_{x+n,yi+n}^{it} = \left[\begin{array}{c}1 - \frac{v\_tasa\_interes^{num\_it - it}}{tasa\_interes}\end{array}\right] \left[\begin{array}{c}\frac{12(1-v\_rendimiento)}{i^{(12)}} + \frac{2(1-v\_rendimiento)}{i^{(2)}}\end{array}\right]$
+-   $i^{(12)} = 12\left(\begin{array}{c}(1+tasa\_rendimiento\_nominal)^{1/12} - 1\end{array}\right)$
+-   $i^{(2)} = 2\left(\begin{array}{c}(1+tasa\_rendimiento\_nominal)^{1/2}-1\end{array}\right)$
+
+```{r eval=FALSE}
+factor_reserva_invalidez_orfandad <- 
+  copy(arg_cotizantes_activos_PI_orfandad)[,xorfa :=
+       pmax(0, edad_maxima_orfandad - edad_hijo)] %>%
+    .[, num_n := pmin(xorfa, nrs) ] %>%
+    .[, .(genero, edad, edad_hijo, nrs, xorfa, num_n)] %>%
+    unique() %>%
+    .[, .(n = c(0:num_n)), by = names(.)] %>%
+    .[, num_it := pmin(xorfa - n, w-edad-n)] %>%
+    .[, .(it = c(0:num_it)), by = names(.)]  %>%
+    .[, `:=` (`edad+n` = edad + n,
+              `edad+n+it` = edad + n  + it,
+              `edad_hijo+n` = edad_hijo + n,
+              `edad_hijo+n+it` = edad_hijo +n + it,
+              `i^(12)` = ((1 + tasa_rendimiento_nominal)^(1/12) - 1)*12,
+              `i^(2)`  = ((1 + tasa_rendimiento_nominal)^(1/2)  - 1)*2)] %>%
+    .[, S_invalidez_orfandad :=  
+        (1 - v_tasa_interes^(num_it-it))/tasa_interes * 
+        ( 12*(1- v_rendimiento)/`i^(12)` + 2*(1- v_rendimiento)/`i^(2)`)] %>%
+    .[arg_conmutados_invalidos %>% as.data.table %>% copy() %>%
+        setnames( old = "edad", new = "edad+n+it"),
+      on = .(genero, `edad+n+it`),
+      `:=` (`l_(x+n+it)` = i.l_x,
+            `q_(x+n+it)` = i.q_x)] %>%
+    .[arg_conmutados_invalidos %>% as.data.table %>% copy() %>%
+        setnames( old = "edad", new = "edad+n"),
+      on = .(genero, `edad+n`),
+      `:=` (`l_(x+n)` = i.l_x)] %>%
+    .[, factor_reserva_invalidez_orfandad := S_invalidez_orfandad *
+        `l_(x+n+it)` / `l_(x+n)`* `q_(x+n+it)` * v_tasa_interes^it] %>%
+    .[, by = .(genero, edad, edad_hijo, nrs, n, `edad+n`, `edad_hijo+n`,
+               xorfa, num_n),
+    .(factor_reserva_invalidez_orfandad = 
+        sum(factor_reserva_invalidez_orfandad, na.rm = TRUE))]
+  
+  
+  reserva_invalidez_orfandad <-
+    copy(arg_cotizantes_activos_PI_orfandad)[factor_reserva_invalidez_orfandad,
+          on = .(genero, edad, edad_hijo, nrs, n,`edad+n`, `edad_hijo+n`),                   factor_reserva_invalidez_orfandad := 
+            i.factor_reserva_invalidez_orfandad] %>%
+    .[arg_tabla_decrementos_multiples %>% as.data.table() %>% copy() %>%
+        setnames(old = c("edad", "l_x^t", "q^i"), new = c("edad+n",
+                                             "l_x_ala_t", "q_ala_i")),
+      on = .(genero , `edad+n`),
+      `:=` (`l_(x+n)^t` = i.l_x_ala_t,
+            `q_(x+n)^i` = i.q_ala_i)] %>%
+    .[arg_tabla_decrementos_multiples %>% as.data.table() %>% 
+        copy() %>% setnames(old ="l_x^t", new ="l_x_ala_t"),
+      on = .(genero , edad),
+      `:=` (`l_x^t` = i.l_x_ala_t)] %>%
+    .[, `:=` (parte_1 = tasa_reemplazo_orfandad * suma_pension_invalidez *
+                factor_reserva_invalidez_orfandad,
+              parte_2 = `l_(x+n)^t` / `l_x^t` * `q_(x+n)^i` *
+                v_rendimiento^n)] %>%
+    .[,reserva_invalidez_orfandad  := parte_1 * parte_2]
+```
+
+#### Beneficio por conceder viudez
+
+$$PS_{x,yi} = \sum_{n=0}^{nrs-1} TR_{sobi}\cdot PI_{x,n}\cdot S_{x,yi}^{n}\cdot \frac{l_{x+n}}{l_x}\cdot q_{x+n}^{m}\cdot v^n$$
+
+donde:
+
+-   $PS_{x,yi}:$ reserva viudez activos
+-   $TR_{sobi}:$ tasa de reemplazo viudez
+-   $PI_{x,n} = SR_{x,n}\cdot TR_{x+n}$
+-   $S_{x,yi}^{n} = 14\cdot a_{y+n}^{(m)} + 6$
+-   $a_{y+n}^{(m)} = \frac{N_{y+n+1}}{D_{y+n}}$
+
+```{r eval=FALSE}
+  reserva_viudez_activo <- arg_cotizantes_activos_PI_casado %>%
+    mutate(`edad_pareja+n+1` = edad_pareja + n + 1) %>%
+    left_join(select(arg_conmutados_jubilados, genero, edad, Dx),
+       by = c("genero_pareja" = "genero", "edad_pareja+n" = "edad")) %>% 
+    rename(`D_(y+n)` = Dx) %>%
+    left_join(select(arg_conmutados_jubilados, genero, edad, Nx),
+       by = c("genero_pareja"= "genero", "edad_pareja+n+1" = "edad"))%>%
+    rename(`N_(y+n+1)` = Nx) %>%
+    mutate(`a_(y+n)^(m)` = `N_(y+n+1)`/ `D_(y+n)`,
+           `S_(x, y)^n` = 14*`a_(y+n)^(m)` + 6) %>%
+    left_join(select(arg_tabla_decrementos_multiples, genero, edad,
+               `l_x^t`,`q^m`), by = c("genero", "edad+n" = "edad")) %>% 
+    rename(`l_(x+n)^t` = `l_x^t`, `q_(x+n)^m` = `q^m`) %>%
+    left_join(select(arg_tabla_decrementos_multiples, genero, edad, `l_x^t`),     
+              by = c("genero", "edad")) %>%
+    mutate(parte_1 = tasa_reemplazo_viudez * suma_pension_invalidez * 
+             `S_(x, y)^n`,
+           parte_2 = `l_(x+n)^t` / `l_x^t` * `q_(x+n)^m` * v_rendimiento^n,
+           reserva_viudez_activo  = parte_1 * parte_2 )
+
+```
+
+#### Beneficio por conceder orfandad
+
+$$PS_{x,yi} = \sum_{n=0}^{\min(xorfa, nrs-1)}TR_{sobi}\cdot PI_{x,n}\cdot S_{x,yi}\cdot\frac{l_{x+n}^{\tau}}{l_{x}^\tau}\cdot q_{x+n}^{m}\cdot v^n$$
+
+donde:
+
+-   $PS_{x,yi}:$ reserva orfandad
+-   $TR_{sobi}:$ tasa de reemplazo orfandad
+-   $PI_{x,n}:$ suma de pension invalidez
+-   $S_{x,yi} = \left[\begin{array}{c}1 - \frac{v\_tasa\_interes^{xorfa-n}}{tasa\_interes}\end{array}\right]\left[\begin{array}{c}\frac{12(1-v\_rendimiento)}{i^{(12)}} + \frac{2(1-v\_rendimiento)}{i^{(2)}}\end{array}\right]$
+-   $i^{(12)} = 12\cdot \left(\begin{array}{c}(1+tasa\_rendimiento\_nominal)^{1/12}\end{array}\right)$
+-   $i^{(2)} = 2\cdot \left(\begin{array}{c}(1+tasa\_rendimiento\_nominal)^{1/2}\end{array}\right)$
+
+```{r eval=FALSE}
+  reserva_orfandad <-  arg_cotizantes_activos_PI_orfandad %>%
+    mutate(xorfa = pmax(0, edad_maxima_orfandad - edad_hijo ),
+           num_n = pmin(xorfa, nrs)) %>%
+    filter(num_n >= 0 , n <= num_n) %>%
+    mutate(`i^(12)` = ((1 + tasa_rendimiento_nominal)^(1/12) - 1)*12,
+           `i^(2)`  = ((1 + tasa_rendimiento_nominal)^(1/2)  - 1)*2,
+           `S_O(x, y)^n` =  (1 - v_tasa_interes^(xorfa-n))/tasa_interes *
+      ( 12*(1- v_rendimiento)/`i^(12)` + 2*(1- v_rendimiento)/`i^(2)`)) %>%
+    left_join(select(arg_tabla_decrementos_multiples, genero, 
+                edad, `l_x^t`, `q^m`), 
+              by = c("genero", "edad+n" = "edad")) %>% 
+    rename(`l_(x+n)^t` = `l_x^t`, `q_(x+n)^m` = `q^m`) %>%
+    left_join(select(arg_tabla_decrementos_multiples, genero, edad, `l_x^t`), 
+              by = c("genero",  "edad")) %>%
+    mutate(parte_1 = tasa_reemplazo_orfandad * suma_pension_invalidez * 
+             `S_O(x, y)^n`  ,
+           parte_2 = `l_(x+n)^t` / `l_x^t` * `q_(x+n)^m` *  v_tasa_interes^n  ,
+           reserva_orfandad  = parte_1 * parte_2 )
+```
+
+
+
+```{r eval=FALSE}
+ tabla_GF_nrs <- arg_resumen_cotizantes_activos %>%
+    left_join(tabla_edades_jubilacion_reglamento, by = "genero") %>%
+    left_join(tabla_tiempos_postergacion, by = "genero") %>%
+    mutate(edad_jubilacion = pmax(edad_jubilacion, 
+            edad + tiempo_minimo_cotizaciones - anios_cotizados),
+           nrs = pmax(pmax(edad_jubilacion - edad, 
+    tiempo_minimo_cotizaciones - anios_cotizados) + 
+            tiempo_postergacion, 1)) %>%
+    group_by_all() %>%
+    mutate(n = list(1:nrs)) %>%
+    unnest(cols = c(n)) %>%
+    ungroup() %>%
+    mutate(`edad+n`   = edad + n,
+           `edad+n-1` = `edad+n` - 1 )
+  
+  
+  tabla_F_n <- tabla_GF_nrs %>%
+    select(anios_cotizados, n) %>%
+    unique() %>%
+    mutate(`anios_cotizados+n` = anios_cotizados + n,
+           l_iteraciones = pmin(`anios_cotizados+n`, 14)) %>%
+    group_by_all() %>%
+    mutate(l = list(0:l_iteraciones)) %>%
+    unnest(cols = c(l)) %>%
+    ungroup() %>%
+    mutate(F_ = (1 + tasa_incremento_salarial)^(n - l) * 
+             (1 + tasa_inflacion)^l / (l_iteraciones + 1)) %>%
+    group_by(anios_cotizados, n) %>%
+    summarise(F_n = sum(F_)) %>%
+    ungroup()
+  
+  tabla_F_nrs <- tabla_GF_nrs %>%
+    select(nrs) %>%
+    unique() %>%
+    group_by_all() %>%
+    mutate(l = list(0:14)) %>%
+    unnest(cols = c(l)) %>%
+    ungroup() %>%
+    mutate(F_ = (1 + tasa_incremento_salarial)^(nrs - l - 1) *
+             (1 + tasa_inflacion)^l / 15) %>%
+    group_by(nrs) %>%
+    summarise(F_nrs = sum(F_))
+  
+  gastos_funerarios_activos <- tabla_GF_nrs %>%
+    left_join(tabla_F_n,  by = c("anios_cotizados", "n")) %>%
+    mutate(`v_rendimiento` = 1 / (1 + tasa_rendimiento_nominal)) %>%
+    left_join(select(arg_tabla_decrementos_multiples, genero, 
+                     edad, `l_x^t`), 
+              by = c("genero", "edad")) %>%
+    left_join(select(arg_tabla_decrementos_multiples, genero,
+                     edad, `d_x^(m)`), 
+              by = c("genero", "edad+n-1" = "edad")) %>%
+    rename(`d_(x+n-1)^(m)` = `d_x^(m)`) %>%
+    mutate(parte_1 = porcentaje_gastos_funerarios / (`v_rendimiento`^edad * 
+    `l_x^t`) * F_n * suma_salarios * `v_rendimiento`^(`edad+n`)*
+      `d_(x+n-1)^(m)`) %>%
+    select(-c(n, `edad+n`, `edad+n-1`,`d_(x+n-1)^(m)`, F_n )) %>%
+    group_by_at(vars(-parte_1)) %>%
+    summarise(parte_1 = sum(parte_1, na.rm = T)) %>%
+    mutate(`edad+nrs` = edad + nrs) %>%
+    left_join(tabla_F_nrs,  by = "nrs") %>%
+    left_join(select(arg_conmutados_jubilados, genero, edad,  Dx, Mx),
+              by = c("genero", "edad+nrs" = "edad")) %>% 
+    rename( `D_(x+nrs)` = Dx, `M_(x+nrs)` = Mx) %>%
+    left_join(select(arg_tabla_decrementos_multiples, genero, 
+             edad, `l_x^t`), by = c("genero", "edad+nrs" = "edad")) %>% 
+    rename( `l_x^t` = `l_x^t.x` ,  `l_(x+nrs)^t` =   `l_x^t.y` ) %>%
+    mutate(parte_2 = porcentaje_gastos_funerarios *  F_nrs *
+             suma_salarios * (`v_rendimiento`^(`edad+nrs`)*
+                          `l_(x+nrs)^t`) / (`v_rendimiento`^edad  *
+     `l_x^t`)*`M_(x+nrs)` / `D_(x+nrs)`,
+     gastos_funerarios_activos = parte_1 + parte_2)
+```
+
+Finalmente cada uno de los resultados obtenidos de estos computos se muestran en una tabla de resultados, la cual se genera haciendo uso del siguiente código:
+
+```{r eval=FALSE}
+
+ bpc <- tibble(beneficio = c("Vejez",
+                              "Vejez - Viudez",
+                              "Vejez - Orfandad",
+                              "Invalidez",
+                              "Invalidez - Viudez",
+                              "Invalidez - Orfandad",
+                              "Viudez",
+                              "Orfandad",
+                              "Gastos Funerarios"),
+valor = c(reserva_vejez$reserva_vejez %>% sum(na.rm = TRUE) ,
+      reserva_vejez_viudez$reserva_vejez_viudez %>%
+        sum(na.rm = T),
+      reserva_vejez_orfandad$reserva_vejez_orfandad %>%
+        sum(na.rm = T),
+      reserva_invalidez$reserva_invalidez %>% sum(na.rm = T),
+      reserva_invalidez_viudez$reserva_invalidez_viudez %>%
+        sum(na.rm = T),
+      reserva_invalidez_orfandad$reserva_invalidez_orfandad %>%
+        sum(na.rm = T),
+      reserva_viudez_activo$reserva_viudez_activo %>% 
+        sum(na.rm = T),
+      reserva_orfandad$reserva_orfandad %>% sum(na.rm = T),
+      gastos_funerarios_activos$gastos_funerarios_activos %>%
+        sum(na.rm = T)))
+
+
+
+bpc_2 <- bpc %>% filter(beneficio %in% c("Vejez", "Invalidez")) %>%
+mutate(valor = valor * pull(arg_supuestos[arg_supuestos$supuesto == 
+                                      "porcentaje_salud", 2 ]))
+
+bpc_3 <- tibble(beneficio = c("Vejez - Salud", "Invalidez - Salud"),
+        valor = bpc_2$valor)
+bpc_4 <- bind_rows(bpc[1, ], bpc_3[1, ], bpc[2:4, ], bpc_3[2,], 
+                   bpc[5:9, ])
+bpc_5 <- tibble(beneficio = c("TOTAL"), valor = sum(bpc_4$valor))
+
+beneficios_por_conceder   <- bind_rows(bpc_4, bpc_5) %>%
+mutate(tipo_beneficio = "Beneficio Por Conceder")
+
+rm(bpc, bpc_2, bpc_3, bpc_4, bpc_5)
+
+
+return(beneficios_por_conceder)
+  
+}
+```
+
+Recuerde que todos estos bloques de código que acabamos de ver van indexados en una unica función en el caso de beneficios concedidos estan indexados en la función de undefined
